@@ -1,0 +1,1967 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ERACiG Workbench</title>
+<meta name="theme-color" content="#16181d">
+<meta name="color-scheme" content="dark">
+<meta name="application-name" content="ERACiG">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ERACiG">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<style>
+/* Layout: one-screen app. Top app bar, a stack of full-height views, bottom tab bar. Dark only, same palette as the desktop build. */
+:root{
+  --bg:#16181d; --bg2:#1c1f26; --bg3:#232730; --bg4:#2b303b; --bg5:#353b48;
+  --bg-glow:radial-gradient(900px 500px at 10% -10%, #1e2a3f 0%, transparent 60%),
+            radial-gradient(700px 420px at 100% 0%, #221a2e 0%, transparent 55%);
+  --fg:#e6e9ef; --fg2:#b3bac7; --muted:#8089a0; --dim:#5a6273; --strong:#ffffff;
+  --border:#2b303a; --border2:#3a4150; --border3:#4a5264;
+  --accent:#5b8def; --accent-2:#7aa5ff; --accent-soft:rgba(91,141,239,.15); --accent-ring:rgba(91,141,239,.35);
+  --accent-grad:linear-gradient(135deg,#5b8def 0%,#8a6bff 100%);
+  --success:#3ddc97; --warn:#ffb35c; --danger:#ff6b7a;
+  --code-bg:#0d0f13; --code-bg2:#101216; --field-bg:#0a0c10; --scrim:rgba(6,8,12,.7);
+  --t-h:#7cc0ff; --t-code:#ffb489; --t-bold:#ffd479; --t-italic:#d99bff; --t-link:#5fe0c0;
+  --t-quote:#8bbf7a; --t-list:#9cb4ff; --t-marker:#8b93a6; --t-fence:#7a8394; --t-hr:#5a6273; --t-table:#9ee0ff;
+  --b-E:#7aa5ff; --b-R:#ffc178; --b-A:#c4a3ff; --b-C:#ff8a96; --b-iG:#5be8ac;
+  --on-badge:#0e1015; --prev-fg:#cdd3de; --old:#ff8a96; --new:#5be8ac; --rep:#ffb489;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  --r:10px; --r-sm:8px;
+  --shadow-1:0 1px 0 rgba(255,255,255,.03) inset,0 1px 2px rgba(0,0,0,.4);
+  --shadow-3:0 18px 50px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.4);
+  --gl:max(16px,env(safe-area-inset-left,0px)); --gr:max(16px,env(safe-area-inset-right,0px));
+  --ed-fs:16px; --ed-lh:1.55; --gutter:44px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;padding-block:0}
+body{
+  font-family:var(--sans);font-size:15px;line-height:1.4;background-color:var(--bg);background-image:var(--bg-glow);
+  background-attachment:fixed;color:var(--fg);overflow:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;overscroll-behavior:none;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;border-radius:4px}
+button:focus:not(:focus-visible){outline:none}
+.muted{color:var(--muted);font-size:12px}
+.spacer{flex:1 1 auto}
+
+/* ---- shell ---- */
+.app{height:100%;display:flex;flex-direction:column;max-width:880px;margin:0 auto;position:relative;
+  background:var(--bg);box-shadow:0 0 0 1px var(--border)}
+.appbar{flex:0 0 auto;display:flex;align-items:center;gap:2px;min-height:54px;padding:5px var(--gr) 5px var(--gl);
+  background:linear-gradient(180deg,rgba(35,39,48,.98),rgba(22,24,29,.98));border-bottom:1px solid var(--border);position:relative;z-index:5}
+.appbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent-ring) 30%,var(--accent-ring) 70%,transparent);opacity:.55}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent-grad);box-shadow:0 0 12px var(--accent-ring),0 0 0 3px rgba(91,141,239,.08);flex:none;margin-right:8px}
+.proj-btn{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;
+  min-height:44px;background:transparent;border:0;padding:0 8px 0 0;text-align:left}
+.proj-btn .eyebrow{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:4px}
+.proj-btn .eyebrow svg{width:12px;height:12px;transform:rotate(90deg)}
+.proj-btn .nm{max-width:100%;font-weight:700;font-size:16px;color:var(--strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ibtn{width:44px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;
+  border-radius:12px;color:var(--fg2);transition:background .15s,color .15s}
+.ibtn:active{background:var(--bg4);color:var(--strong)}
+.ibtn:disabled{opacity:.3}
+.views{flex:1 1 auto;min-height:0;position:relative}
+.view[hidden],[hidden]{display:none!important}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0}
+.scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;overscroll-behavior:contain}
+.pane{padding:14px var(--gr) 28px var(--gl);display:flex;flex-direction:column;gap:14px}
+
+/* ---- bottom tab bar ---- */
+.nav{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:linear-gradient(180deg,var(--bg3),var(--bg2));
+  border-top:1px solid var(--border);padding:0 var(--gr) 0 var(--gl);position:relative;z-index:5}
+.nav button{position:relative;min-height:58px;background:transparent;border:0;color:var(--muted);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;letter-spacing:.2px;transition:color .15s}
+.nav button.on{color:var(--strong)}
+.nav button.on svg{color:var(--accent-2)}
+.nav button.on::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:2px;border-radius:0 0 2px 2px;background:var(--accent-grad);box-shadow:0 0 12px var(--accent-ring)}
+.nav .cnt{position:absolute;top:7px;left:calc(50% + 5px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--accent);color:#fff;
+  font-size:10px;font-weight:800;line-height:17px;text-align:center}
+.nav .cnt:empty{display:none}
+body.kb .nav{display:none}
+
+/* ---- buttons ---- */
+.btn{background:linear-gradient(180deg,var(--bg4),var(--bg3));border:1px solid var(--border2);color:var(--fg);min-height:44px;padding:0 16px;
+  border-radius:var(--r-sm);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow-1);
+  transition:transform .06s,background .15s,border-color .15s}
+.btn:active{transform:translateY(1px);background:var(--bg5)}
+.btn.primary{background:var(--accent-grad);border-color:transparent;color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 4px 14px -4px var(--accent-ring)}
+.btn.ghost{background:transparent;box-shadow:none}
+.btn.danger{color:#ffc4cc;border-color:rgba(255,107,122,.4)}
+.btn.sm{min-height:38px;padding:0 12px;font-size:13.5px}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>.btn{flex:1 1 140px}
+
+/* ---- editor ---- */
+.ed-tools{flex:0 0 auto;display:flex;align-items:center;gap:2px;padding:4px var(--gr) 4px calc(var(--gl) - 6px);background:var(--bg2);border-bottom:1px solid var(--border)}
+.ed-tools .ibtn{width:40px;height:40px}
+.ed-tools .ibtn.txt{font-weight:700;font-size:14px;width:auto;min-width:40px;padding:0 6px}
+.ed-tools .muted{margin-left:auto;white-space:nowrap}
+.ed-scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;min-height:0;-webkit-overflow-scrolling:touch;background:var(--bg);overscroll-behavior:contain}
+.ed-stack{position:relative;min-height:100%}
+.ed-text,.ed-hl{font-family:var(--mono);font-size:var(--ed-fs);line-height:var(--ed-lh);letter-spacing:0;tab-size:2;
+  white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;
+  padding:12px var(--gr) 140px calc(var(--gutter) + 2px);margin:0}
+.ed-hl{position:absolute;top:0;left:0;right:0;pointer-events:none;counter-reset:ln;color:var(--fg)}
+.ed-hl .l{position:relative;min-height:calc(var(--ed-fs)*var(--ed-lh))}
+.ed-hl .l::before{counter-increment:ln;content:counter(ln);position:absolute;left:calc(-1*var(--gutter) - 2px + var(--gl) - var(--gl));width:calc(var(--gutter) - 8px);
+  text-align:right;font-size:.72em;color:#4e5566;font-variant-numeric:tabular-nums;user-select:none}
+.ed-hl .l.flash{background:var(--accent-soft);box-shadow:-6px 0 0 var(--accent-soft),6px 0 0 var(--accent-soft)}
+textarea.ed-text{position:relative;display:block;width:100%;border:0;outline:none;resize:none;overflow:hidden;background:transparent;
+  color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--accent-2);border-radius:0}
+textarea.ed-text::selection{background:rgba(91,141,239,.4);-webkit-text-fill-color:transparent}
+.t-h{color:var(--t-h);font-weight:700}.t-fence{color:var(--t-fence)}.t-code{color:var(--t-code)}
+.t-inlinecode{color:var(--t-code)}.t-bold{color:var(--t-bold);font-weight:700}.t-italic{color:var(--t-italic);font-style:italic}
+.t-link{color:var(--t-link)}.t-quote{color:var(--t-quote)}.t-list{color:var(--t-list)}.t-hr{color:var(--t-hr)}.t-table{color:var(--t-table)}.t-marker{color:var(--t-marker)}
+.keystrip{flex:0 0 auto;display:none;grid-template-columns:repeat(7,minmax(0,1fr)) auto;gap:6px;padding:6px var(--gr) 6px var(--gl);background:var(--bg3);border-top:1px solid var(--border2);scrollbar-width:none}
+.keystrip::-webkit-scrollbar{display:none}
+.view-editor:focus-within .keystrip{display:grid}
+.keystrip button{min-width:0;height:42px;padding:0 4px;border-radius:9px;background:var(--bg4);border:1px solid var(--border2);font-family:var(--mono);font-weight:700;font-size:15px}
+.keystrip button:active{background:var(--bg5)}
+.keystrip button.done{padding:0 14px;font-family:var(--sans);background:var(--accent-soft);border-color:var(--accent);color:var(--accent-2)}
+
+/* ---- preview ---- */
+.preview{padding:16px var(--gr) 60px var(--gl);line-height:1.7;font-size:16px;color:var(--prev-fg);overflow-wrap:anywhere}
+.preview h1,.preview h2,.preview h3,.preview h4,.preview h5,.preview h6{color:var(--strong);margin:1.1em 0 .45em;line-height:1.3;font-weight:650;letter-spacing:-.01em}
+.preview h1{font-size:1.55em;border-bottom:1px solid var(--border);padding-bottom:.3em;background:linear-gradient(90deg,#fff,#a9c1ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.preview h2{font-size:1.3em;border-bottom:1px solid var(--border);padding-bottom:.25em;color:#e8f0ff}
+.preview h3{font-size:1.14em;color:#dbe5ff}.preview h4{font-size:1.04em}
+.preview p{margin:.7em 0}.preview ul,.preview ol{margin:.6em 0;padding-left:1.4em}.preview li{margin:.3em 0}.preview li::marker{color:var(--accent-2)}
+.preview code{font-family:var(--mono);font-size:.86em;background:rgba(255,180,137,.1);border:1px solid rgba(255,180,137,.15);padding:1px 6px;border-radius:5px;color:#ffcba6}
+.preview pre.md-pre{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;overflow:auto;margin:.9em 0}
+.preview pre.md-pre code{background:none;border:none;padding:0;color:#d4d4d4;font-size:13px;line-height:1.55;overflow-wrap:normal}
+.preview blockquote.md-bq{border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--accent-soft),transparent 80%);margin:.8em 0;padding:.4em 0 .4em 14px;color:#a8b4c8;border-radius:0 8px 8px 0}
+.preview hr.md-hr{border:none;border-top:1px solid var(--border);margin:1.5em 0}
+.preview a{color:var(--t-link)}
+.psec-h{position:relative;cursor:pointer;user-select:none;padding-left:22px;-webkit-user-select:none}
+.psec-h::before{content:"";position:absolute;left:3px;top:calc(.75em + 1px);width:7px;height:7px;border-right:2px solid var(--accent-2);border-bottom:2px solid var(--accent-2);transform:translateY(-70%) rotate(45deg);transition:transform .15s}
+.psec.collapsed>.psec-h::before{transform:translateY(-50%) rotate(-45deg)}
+.psec.collapsed>.psec-body{display:none}
+
+/* ---- issues ---- */
+.toolbar{position:sticky;top:0;z-index:3;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px var(--gr) 10px var(--gl);display:flex;flex-direction:column;gap:8px}
+.toolbar .top{display:flex;align-items:center;gap:8px}
+.issue-count{font-weight:700;font-size:15px;color:var(--fg)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1*var(--gr)) 0 calc(-1*var(--gl));padding:0 var(--gr) 0 var(--gl)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;min-height:36px;min-width:44px;padding:0 14px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--fg2);font-weight:600;font-size:13px}
+.chip.on{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.chip[data-filter="open"]{margin-left:auto}
+.issue{border-bottom:1px solid var(--border);background:var(--bg2);position:relative}
+.issue::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stripe,transparent)}
+.issue[data-type="E"]{--stripe:var(--b-E)}.issue[data-type="R"]{--stripe:var(--b-R)}.issue[data-type="A"]{--stripe:var(--b-A)}
+.issue[data-type="C"]{--stripe:var(--b-C)}.issue[data-type="iG"]{--stripe:var(--b-iG)}
+.issue.discarded{opacity:.55}.issue.applied{background:linear-gradient(90deg,rgba(61,220,151,.07),var(--bg2) 70%)}
+.issue.closed .issue-body{display:none}
+.issue-head{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px var(--gr) 12px var(--gl);background:none;border:0;text-align:left;color:inherit}
+.badge{flex:0 0 auto;min-width:30px;text-align:center;font-size:12px;font-weight:800;border-radius:7px;padding:4px 8px;color:var(--on-badge)}
+.b-E{background:var(--b-E)}.b-R{background:var(--b-R)}.b-A{background:var(--b-A)}.b-C{background:var(--b-C)}.b-iG{background:var(--b-iG)}
+.head-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.issue-title{font-size:14.5px;font-weight:500;line-height:1.4;color:var(--fg);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.status-pill{font-size:11px;font-weight:700;letter-spacing:.2px;padding:2px 10px;border-radius:999px;background:var(--bg4);color:var(--fg2)}
+.s-applied{background:rgba(61,220,151,.15);color:#5be8ac}.s-builtin{background:rgba(91,141,239,.15);color:#9ec4ff}
+.s-custom{background:rgba(255,180,137,.15);color:#ffcba6}.s-discard{background:rgba(255,255,255,.06);color:#9aa2b4}
+.chev{flex:0 0 auto;width:18px;height:18px;color:var(--muted);transition:transform .2s}
+.issue:not(.closed) .chev{transform:rotate(90deg)}
+.issue-body{padding:2px var(--gr) 20px var(--gl);display:flex;flex-direction:column;gap:18px}
+.section{display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.quote{margin:0;font-size:14.5px;line-height:1.6;color:#c8d0df;font-style:italic;padding:10px 14px;border-left:3px solid var(--border3);background:rgba(255,255,255,.03);border-radius:0 8px 8px 0;overflow-wrap:anywhere}
+.text{margin:0;font-size:14.5px;line-height:1.6;color:var(--fg2);overflow-wrap:anywhere}
+.wheres{display:flex;flex-direction:column;gap:10px}
+.where-row{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.where-row code{display:block;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--rep);padding:10px 12px;max-height:96px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.where-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)}
+.where-actions button{min-height:44px;background:transparent;border:0;color:var(--fg2);font-weight:600;font-size:13.5px}
+.where-actions button+button{border-left:1px solid var(--border)}
+.where-actions button:active{background:rgba(255,255,255,.07);color:#fff}
+.resolve-box{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(0,0,0,.15)}
+.mode-option{position:relative;display:flex;align-items:center;gap:14px;min-height:60px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.mode-option:last-child{border-bottom:0}
+.mode-option input{position:absolute;opacity:0;pointer-events:none}
+.mode-option:has(input:disabled){opacity:.45}
+.radio-dot{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--border3);position:relative}
+.mode-option input:checked+.radio-dot{border-color:var(--accent)}
+.mode-option input:checked+.radio-dot::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
+.mode-option input:focus-visible+.radio-dot{outline:2px solid var(--accent-2);outline-offset:2px}
+.mode-text{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mode-title{font-size:15px;font-weight:600;color:var(--fg)}.mode-sub{font-size:12.5px;color:var(--muted)}
+.mode-panel{display:flex;flex-direction:column;gap:12px}
+.alt-picker{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.alt-picker::-webkit-scrollbar{display:none}
+.alt-tab{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--fg2);font-weight:600;font-size:13px}
+.alt-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.diff{background:rgba(0,0,0,.3);border-radius:var(--r-sm);padding:4px 12px;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+.diff-row{display:flex;flex-direction:column;gap:3px;padding:9px 0}
+.diff-row+.diff-row{border-top:1px dashed rgba(255,255,255,.1)}
+.diff-old,.diff-new{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding-left:16px;position:relative}
+.diff-old{color:var(--old);text-decoration:line-through}.diff-new{color:var(--new)}
+.diff-old::before,.diff-new::before{position:absolute;left:0;text-decoration:none;display:inline-block;font-weight:700}
+.diff-old::before{content:"−"}.diff-new::before{content:"+"}
+.custom-rows{display:flex;flex-direction:column;gap:12px}
+.custom-row{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.custom-row-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.lit-toggle{display:inline-flex;align-items:center;gap:8px;min-height:36px;text-transform:none;letter-spacing:0;font-weight:600;font-size:13.5px;color:var(--fg2)}
+.lit-toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.mini{min-height:36px;padding:0 12px;border-radius:8px;background:var(--bg4);border:1px solid var(--border2);font-size:13px;font-weight:600;color:var(--fg2)}
+.mini:first-of-type{margin-left:auto}
+.custom-row textarea,.fld{width:100%;min-height:48px;resize:vertical;background:var(--field-bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:16px;line-height:1.5;color:var(--rep);outline:none}
+.custom-row textarea.rep{color:var(--new)}
+.custom-row textarea:focus,.fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.warn{font-size:13px;line-height:1.5;color:#ffcba6;background:rgba(255,179,92,.08);border:1px solid rgba(255,179,92,.25);border-radius:8px;padding:10px 12px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions .btn{border-radius:999px}
+.actions .act-apply{grid-column:1/-1;background:var(--fg);color:var(--bg);border-color:var(--fg);min-height:48px;font-size:16px}
+.actions .act-copy{background:transparent;box-shadow:none;color:var(--fg2)}
+.empty{padding:48px 28px;text-align:center;color:var(--muted);line-height:1.7;font-size:14.5px}
+.empty b{display:block;color:var(--fg2);font-size:16px;margin-bottom:8px}
+.empty::before{content:"◆";display:block;font-size:24px;color:var(--accent);opacity:.4;margin-bottom:14px}
+
+/* ---- prompts and data ---- */
+.hint{font-size:13.5px;color:var(--muted);line-height:1.65;padding:12px 14px;background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:0 8px 8px 0}
+.card{border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(180deg,var(--bg3),var(--bg2));overflow:hidden;box-shadow:var(--shadow-1)}
+.card h3{margin:0;padding:12px 14px;font-size:14px;font-weight:700;color:var(--strong);background:linear-gradient(180deg,var(--bg4),var(--bg3));border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card h3 .num{background:var(--accent-grad);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
+.card .cb{padding:14px;display:flex;flex-direction:column;gap:12px}
+.card textarea{width:100%;min-height:260px;background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:16px;line-height:1.55;resize:vertical;outline:none;color:#c8d0df}
+.card textarea.short{min-height:170px}
+.card textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-grid div{background:linear-gradient(180deg,var(--bg4),var(--bg3));border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--muted);font-size:12.5px}
+.stat-grid b{display:block;color:var(--strong);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ---- toasts and sheets ---- */
+#toasts{position:fixed;left:var(--gl);right:var(--gr);bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+body.kb #toasts{bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+.toast{background:linear-gradient(180deg,#2b303b,#232730);border:1px solid var(--border3);border-radius:12px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:var(--shadow-3);animation:tin .22s cubic-bezier(.2,.9,.3,1.1);max-width:100%;text-align:center}
+.toast.err{border-color:rgba(255,107,122,.5);background:linear-gradient(180deg,#3a1f26,#2a151c);color:#ffc4cc}
+.toast.ok{border-color:rgba(61,220,151,.5);background:linear-gradient(180deg,#153a2e,#0e2a20);color:#a8f0cf}
+@keyframes tin{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+.sheet-back{position:fixed;inset:0;background:var(--scrim);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;z-index:1000;animation:fin .18s ease-out}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+.sheet{width:100%;max-width:600px;max-height:86vh;max-height:86dvh;display:flex;flex-direction:column;background:linear-gradient(180deg,#232730,#1a1d24);border:1px solid var(--border2);border-bottom:0;
+  border-radius:20px 20px 0 0;padding:6px var(--gr) calc(14px + env(safe-area-inset-bottom,0px)) var(--gl);box-shadow:var(--shadow-3);animation:sheetin .24s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetin{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.grip{width:40px;height:4px;border-radius:2px;background:var(--border3);margin:6px auto 8px;flex:none}
+.sheet h3{margin:4px 0 8px;font-size:17px;font-weight:700;color:var(--strong);flex:none}
+.sheet-body{overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:2px;-webkit-overflow-scrolling:touch}
+.sheet .grp{font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);padding:12px 4px 4px}
+.srow{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 10px;background:transparent;border:0;border-radius:12px;text-align:left;color:var(--fg)}
+.srow:active{background:var(--bg4)}
+.srow .st{flex:1;min-width:0;display:flex;flex-direction:column}
+.srow .st b{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .st span{font-size:12.5px;color:var(--muted)}
+.srow.on .st b{color:var(--accent-2)}
+.srow.on::after{content:"✓";color:var(--accent-2);font-weight:800}
+.srow.danger b{color:#ff9aa6}
+.srow svg{color:var(--muted)}
+.sheet input.fld{font-family:var(--sans);color:var(--strong);min-height:48px}
+.sheet .row{margin-top:14px}
+.sheet textarea.fld{min-height:180px;color:var(--fg2)}
+.sheet p{margin:0 0 10px;color:var(--fg2);line-height:1.6;font-size:14.5px}
+.ol-item{display:block;width:100%;text-align:left;min-height:46px;padding:8px 10px;background:transparent;border:0;border-radius:10px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ol-item:active{background:var(--bg4)}
+.ol-item.l1{color:var(--strong);font-weight:700}.ol-item.l2{padding-left:24px}.ol-item.l3{padding-left:38px}.ol-item.l4,.ol-item.l5,.ol-item.l6{padding-left:52px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+textarea.ed-text::placeholder{color:var(--dim);-webkit-text-fill-color:var(--dim);opacity:1}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.7" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-issues" viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.2 1.2L7 4.8M3.5 12l1.2 1.2L7 10.8M3.5 18l1.2 1.2L7 16.8"/></symbol>
+  <symbol id="i-prompts" viewBox="0 0 24 24"><path d="M4 5h16v11H9.5L4 20.5V5z"/></symbol>
+  <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+  <symbol id="i-outline" viewBox="0 0 24 24"><path d="M4 6h16M8 12h12M12 18h8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6V3z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></symbol>
+</svg>
+
+<div class="app" id="app">
+  <header class="appbar">
+    <span class="dot"></span>
+    <button class="proj-btn" id="btnProjects" aria-label="Switch project">
+      <span class="eyebrow">ERACiG Workbench <svg class="ic"><use href="#i-chev"/></svg></span>
+      <span class="nm" id="projName">Project</span>
+    </button>
+    <button class="ibtn" id="btnUndo" aria-label="Undo"><svg class="ic"><use href="#i-undo"/></svg></button>
+    <button class="ibtn" id="btnRedo" aria-label="Redo"><svg class="ic"><use href="#i-redo"/></svg></button>
+    <button class="ibtn" id="btnMenu" aria-label="File menu"><svg class="ic"><use href="#i-more"/></svg></button>
+  </header>
+
+  <main class="views">
+    <section class="view view-editor" id="v-editor">
+      <div class="ed-tools">
+        <button class="ibtn" id="btnOutlineE" aria-label="Outline"><svg class="ic"><use href="#i-outline"/></svg></button>
+        <button class="ibtn txt" id="btnFontDown" aria-label="Smaller text">A−</button>
+        <button class="ibtn txt" id="btnFontUp" aria-label="Larger text">A+</button>
+        <span class="muted" id="docStats"></span>
+      </div>
+      <div class="ed-scroll" id="edScroll">
+        <div class="ed-stack" id="edStack">
+          <div class="ed-hl ed-text" id="edHl" aria-hidden="true"></div>
+          <textarea class="ed-text" id="editor" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+            aria-label="Markdown spec editor" placeholder="Paste or type your app spec in Markdown"></textarea>
+        </div>
+      </div>
+      <div class="keystrip" id="keystrip">
+        <button data-k="h" aria-label="Heading">#</button>
+        <button data-k="b" aria-label="Bold">**</button>
+        <button data-k="i" aria-label="Italic">_</button>
+        <button data-k="c" aria-label="Inline code">`</button>
+        <button data-k="l" aria-label="List item">-</button>
+        <button data-k="q" aria-label="Quote">&gt;</button>
+        <button data-k="t" aria-label="Indent">⇥</button>
+        <button data-k="done" class="done">Done</button>
+      </div>
+    </section>
+
+    <section class="view" id="v-preview" hidden>
+      <div class="ed-tools">
+        <button class="ibtn" id="btnOutlineP" aria-label="Outline"><svg class="ic"><use href="#i-outline"/></svg></button>
+        <button class="ibtn txt" id="btnExpandAll">Expand all</button>
+        <button class="ibtn txt" id="btnCollapseAll">Collapse all</button>
+      </div>
+      <div class="scroll" id="previewScroll"><div class="preview" id="preview"></div></div>
+    </section>
+
+    <section class="view" id="v-issues" hidden>
+      <div class="scroll" id="issuesScroll">
+        <div class="toolbar">
+          <div class="top">
+            <span class="issue-count" id="issueCount">0 issues</span>
+            <span class="spacer"></span>
+            <button class="mini" id="btnApplyAll">Apply all</button>
+          </div>
+          <div class="chips" id="chips">
+            <button class="chip on" data-filter="E">E</button>
+            <button class="chip on" data-filter="R">R</button>
+            <button class="chip on" data-filter="A">A</button>
+            <button class="chip on" data-filter="C">C</button>
+            <button class="chip on" data-filter="iG">iG</button>
+            <button class="chip" data-filter="open">Open only</button>
+          </div>
+        </div>
+        <div id="issuesList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-prompts" hidden>
+      <div class="scroll"><div class="pane">
+        <div class="hint">Two-stage prompting keeps the AI focused. First it reasons about the spec and writes a readable ERACiG document. A second pass rewrites that document as strict JSON this app can apply. Edit either prompt; they are saved with your data.</div>
+        <div class="card">
+          <h3><span class="num">1</span> ERACiG document (no JSON)</h3>
+          <div class="cb">
+            <textarea id="promptDoc" spellcheck="false" aria-label="Prompt 1"></textarea>
+            <div class="row">
+              <button class="btn primary" data-copy="promptDoc">Copy</button>
+              <button class="btn" data-copy-filled="promptDoc">Copy with spec</button>
+              <button class="btn ghost" data-reset="promptDoc">Reset</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><span class="num">2</span> Rewrite as ERACiG JSON</h3>
+          <div class="cb">
+            <textarea id="promptJson" spellcheck="false" aria-label="Prompt 2"></textarea>
+            <div class="row">
+              <button class="btn primary" data-copy="promptJson">Copy</button>
+              <button class="btn" data-copy-filled="promptJson">Copy with spec</button>
+              <button class="btn ghost" data-reset="promptJson">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="view" id="v-data" hidden>
+      <div class="scroll"><div class="pane">
+        <div class="card">
+          <h3>Paste ERACiG JSON</h3>
+          <div class="cb">
+            <textarea class="short" id="jsonPaste" spellcheck="false" aria-label="ERACiG JSON" placeholder='[ { "type": "A", "where": ["..."], "what": "...", "why": "...", "solutions": ["..."] } ]'></textarea>
+            <div class="row">
+              <button class="btn primary" id="btnPasteReplace">Replace issues</button>
+              <button class="btn" id="btnPasteAppend">Append issues</button>
+              <button class="btn ghost" id="btnPasteClear">Clear</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Current project</h3>
+          <div class="cb">
+            <div class="stat-grid" id="projStats"></div>
+            <div class="row">
+              <button class="btn" id="btnExportJson">Save ERACiG JSON</button>
+              <button class="btn ghost" id="btnResetResolutions">Reset resolutions</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Backup and restore</h3>
+          <div class="cb">
+            <div class="hint">Projects, issues, resolutions, prompts and layout live in this browser's storage. Back up regularly. Backups from the desktop version restore here too.</div>
+            <div class="row">
+              <button class="btn primary" id="btnBackup2">Save backup</button>
+              <button class="btn" id="btnRestore2">Restore backup</button>
+              <button class="btn danger" id="btnWipe">Erase everything</button>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </section>
+  </main>
+
+  <nav class="nav" id="nav" aria-label="Sections">
+    <button data-tab="editor" class="on"><svg class="ic"><use href="#i-edit"/></svg>Editor</button>
+    <button data-tab="preview"><svg class="ic"><use href="#i-eye"/></svg>Preview</button>
+    <button data-tab="issues"><svg class="ic"><use href="#i-issues"/></svg>Issues<span class="cnt" id="issueBadge"></span></button>
+    <button data-tab="prompts"><svg class="ic"><use href="#i-prompts"/></svg>Prompts</button>
+    <button data-tab="data"><svg class="ic"><use href="#i-data"/></svg>Data</button>
+  </nav>
+</div>
+
+<input type="file" id="fileMd" multiple accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+<input type="file" id="fileJson" accept=".json,.txt,application/json" hidden>
+<input type="file" id="fileRestore" accept=".json,application/json" hidden>
+<div id="toasts" aria-live="polite"></div>
+<script>
+window.__STANDALONE = true;
+"use strict";
+/* ------------------------------------------------------------------ utils */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+
+const escapeHtml = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeAttr = s => escapeHtml(s).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function toast(msg, kind) {
+  const d = document.createElement("div");
+  d.className = "toast" + (kind ? " " + kind : "");
+  d.textContent = msg;
+  $("#toasts").appendChild(d);
+  setTimeout(() => { d.style.transition = "opacity .3s"; d.style.opacity = "0";
+    setTimeout(() => d.remove(), 320); }, kind === "err" ? 4800 : 2600);
+}
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+function arr(x) { if (x == null) return []; return Array.isArray(x) ? x : [x]; }
+function str(x) { if (x == null) return ""; if (typeof x === "string") return x; return String(x); }
+
+/* --------------------------------------------------------------- regexps  */
+function makeRegex(src, literal) {
+  if (src == null) return null;
+  src = String(src);
+  if (!src.length) return null;
+  const slash = src.match(/^\/([\s\S]*)\/([gimsuy]*)$/);
+  try {
+    if (!literal) {
+      if (slash) {
+        const f = slash[2].indexOf("g") >= 0 ? slash[2] : slash[2] + "g";
+        return new RegExp(slash[1], f);
+      }
+      return new RegExp(src, "g");
+    }
+  } catch (e) { /* fall through to literal */ }
+  try { return new RegExp(escapeRe(src), "g"); } catch (e) { return null; }
+}
+/* ======================================================= ISSUE NORMALISE */
+function normType(t) {
+  const s = String(t == null ? "" : t).trim().toLowerCase();
+  if (s === "e" || s.startsWith("extra")) return "E";
+  if (s === "r" || s.startsWith("redu")) return "R";
+  if (s === "a" || s.startsWith("ambi")) return "A";
+  if (s === "c" || s.startsWith("conf") || s.startsWith("contra")) return "C";
+  if (s === "ig" || s.includes("gap") || s.includes("information")) return "iG";
+  if (s.length <= 2) return t;
+  return "E";
+}
+
+function normalizeIssue(raw, i) {
+  if (raw == null || typeof raw !== "object") return null;
+  const where = arr(raw.where != null ? raw.where : raw.location).map(str).filter(x => x.length);
+  const what = str(raw.what != null ? raw.what : (raw.quote != null ? raw.quote : ""));
+  const why = str(raw.why != null ? raw.why : (raw.impact != null ? raw.impact : ""));
+
+  let alts = [];
+  const sol = raw.solutions != null ? raw.solutions
+            : raw.solution != null ? raw.solution
+            : raw.fixes != null ? raw.fixes
+            : raw.fix;
+
+  if (Array.isArray(sol)) {
+    if (!sol.length) {
+      /* nothing */
+    } else if (sol.every(x => typeof x === "string")) {
+      alts.push({ label: "Proposed fix", where: where.slice(), replace: sol.map(str) });
+    } else if (sol.every(x => Array.isArray(x))) {
+      sol.forEach((s, k) => alts.push({ label: "Proposed fix " + (k + 1), where: where.slice(), replace: s.map(str) }));
+    } else {
+      sol.forEach((s, k) => {
+        if (s && typeof s === "object") {
+          const w = arr(s.where != null ? s.where : (s.location != null ? s.location : s.selector)).map(str).filter(Boolean);
+          const r = arr(s.replace != null ? s.replace
+                    : s.replacement != null ? s.replacement
+                    : s.solution != null ? s.solution
+                    : s.fix != null ? s.fix
+                    : s["with"]).map(str);
+          alts.push({
+            label: str(s.label || s.name || ("Solution " + (k + 1))),
+            where: w.length ? w : where.slice(),
+            replace: r
+          });
+        } else {
+          alts.push({ label: "Solution " + (k + 1), where: where.slice(), replace: where.map(() => str(s)) });
+        }
+      });
+    }
+  } else if (typeof sol === "string" && sol.length) {
+    alts.push({ label: "Proposed fix", where: where.slice(), replace: where.map(() => sol) });
+  }
+
+  alts.forEach(a => {
+    while (a.replace.length < a.where.length) a.replace.push("");
+    if (a.replace.length > a.where.length) a.replace.length = a.where.length;
+  });
+
+  return {
+    id: str(raw.id) || ("iss_" + uid() + "_" + i),
+    type: normType(raw.type),
+    where, what, why, alts,
+    _raw: raw
+  };
+}
+
+function parseIssuePayload(text) {
+  let data = text.trim();
+  if (!data) throw new Error("Empty input");
+  const parsed = JSON.parse(data);
+  let list = null;
+  if (Array.isArray(parsed)) list = parsed;
+  else if (parsed && typeof parsed === "object") {
+    list = parsed.issues || parsed.items || parsed.eracig || parsed.findings || parsed.data || null;
+  }
+  if (!Array.isArray(list)) throw new Error("No array of issues found in the JSON");
+  return list.map(normalizeIssue).filter(Boolean);
+}
+/* ============================================================ MARKDOWN   */
+/* -------- inline highlight (editor: keeps markers, colours them) ------- */
+function inlineHighlight(raw) {
+  const stash = [];
+  const save = (cls, txt) => {
+    const id = "\u0001" + stash.length + "\u0001";
+    stash.push('<span class="' + cls + '">' + escapeHtml(txt) + "</span>");
+    return id;
+  };
+  let s = String(raw).replace(/\u0001/g, "");
+  s = s.replace(/(`[^`\n]+`)/g, (_, m) => save("t-code", m));
+  s = s.replace(/(\*\*[^*\n]+\*\*)/g, (_, m) => save("t-bold", m));
+  s = s.replace(/(__[^_\n]+__)/g, (_, m) => save("t-bold", m));
+  s = s.replace(/(~~[^~\n]+~~)/g, (_, m) => save("t-italic", m));
+  s = s.replace(/(^|[^*\w])\*([^*\n]+?)\*/g, (_, pre, m) =>
+    pre + save("t-italic", "*" + m + "*"));
+  s = s.replace(/(^|[^_\w])_([^_\n]+?)_(?=[^_\w]|$)/g, (_, pre, m) =>
+    pre + save("t-italic", "_" + m + "_"));
+  s = escapeHtml(s);
+  s = s.replace(/\u0001(\d+)\u0001/g, (_, i) => stash[+i] || "");
+  return s;
+}
+
+/* -------- whole-line highlight (used per editor line) ------------------ */
+function highlightLine(raw) {
+  if (!raw || !raw.trim()) return "";
+  if (/^#{1,6}\s/.test(raw))
+    return '<span class="t-h">' + escapeHtml(raw) + "</span>";
+  if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(raw))
+    return '<span class="t-hr">' + escapeHtml(raw) + "</span>";
+  if (/^\s*>/.test(raw))
+    return '<span class="t-quote">' + escapeHtml(raw) + "</span>";
+  const m = raw.match(/^(\s*)([-*+]|\d+[.)])(\s+)([\s\S]*)$/);
+  if (m)
+    return m[1]
+      + '<span class="t-list">' + escapeHtml(m[2]) + "</span>"
+      + escapeHtml(m[3])
+      + inlineHighlight(m[4]);
+  return inlineHighlight(raw);
+}
+
+/* -------- inline render (preview: consumes markers, emits real HTML) --- */
+function renderInline(raw) {
+  const stash = [];
+  const save = html => {
+    const id = "\u0001" + stash.length + "\u0001";
+    stash.push(html);
+    return id;
+  };
+  let s = escapeHtml(String(raw).replace(/\u0001/g, ""));
+  s = s.replace(/`([^`\n]+)`/g, (_, c) => save("<code>" + c + "</code>"));
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    (_, alt, src, title) =>
+      save('<img src="' + safeUrl(src) + '" alt="' + alt + '"' + (title ? ' title="' + title + '"' : "") + ">"));
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    (_, text, href, title) =>
+      save('<a href="' + safeUrl(href) + '" target="_blank" rel="noopener"'
+        + (title ? ' title="' + title + '"' : "") + ">" + text + "</a>"));
+  s = s.replace(/\*\*([^*]+)\*\*/g, (_, c) => save("<strong>" + c + "</strong>"));
+  s = s.replace(/__([^_]+)__/g, (_, c) => save("<strong>" + c + "</strong>"));
+  s = s.replace(/(^|[^*\w])\*([^*\n]+?)\*/g,
+    (_, pre, c) => pre + save("<em>" + c + "</em>"));
+  s = s.replace(/(^|[^_\w])_([^_\n]+?)_(?=[^_\w]|$)/g,
+    (_, pre, c) => pre + save("<em>" + c + "</em>"));
+  s = s.replace(/~~([^~]+)~~/g, (_, c) => save("<del>" + c + "</del>"));
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,
+    (_, pre, url) => pre + save('<a href="' + url + '" target="_blank" rel="noopener">' + url + "</a>"));
+  s = s.replace(/\u0001(\d+)\u0001/g, (_, i) => stash[+i] || "");
+  return s;
+}
+
+/* -------- block-level parser for the preview -------------------------- */
+function isBlockStart(line) {
+  return /^#{1,6}\s/.test(line)
+      || /^\s*([-*_])(\s*\1){2,}\s*$/.test(line)
+      || /^\s*[-*+]\s+/.test(line)
+      || /^\s*\d+[.)]\s+/.test(line)
+      || /^\s*>/.test(line)
+      || /^\s*(`{3,}|~{3,})/.test(line);
+}
+
+function parseBlocks(md) {
+  const src = String(md || "").replace(/\r\n?/g, "\n");
+  const lines = src.split("\n");
+  const tokens = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line)) { i++; continue; }
+
+    const fence = line.match(/^\s*(`{3,}|~{3,})\s*(\S*)/);
+    if (fence) {
+      const ch = fence[1][0];
+      const lang = fence[2] || "";
+      const buf = [];
+      i++;
+      const close = new RegExp("^\\s*" + ch + "{3,}\\s*$");
+      while (i < lines.length && !close.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      tokens.push({ kind: "b", html:
+        '<pre class="md-pre"><code' + (lang ? ' class="lang-' + escapeAttr(lang) + '"' : "")
+        + ">" + escapeHtml(buf.join("\n")) + "</code></pre>" });
+      continue;
+    }
+
+    const h = line.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
+    if (h) {
+      const lv = h[1].length;
+      tokens.push({ kind: "h", level: lv,
+        html: "<h" + lv + ">" + renderInline(h[2]) + "</h" + lv + ">" });
+      i++; continue;
+    }
+
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(line)) {
+      tokens.push({ kind: "b", html: '<hr class="md-hr">' });
+      i++; continue;
+    }
+
+    if (/^\s*>/.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) {
+        buf.push(lines[i].replace(/^\s*>\s?/, "")); i++;
+      }
+      tokens.push({ kind: "b", html:
+        '<blockquote class="md-bq">' + parseBlocks(buf.join("\n")) + "</blockquote>" });
+      continue;
+    }
+
+    if (/^\s*[-*+]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
+        items.push("<li>" + renderInline(lines[i].replace(/^\s*[-*+]\s+/, "")) + "</li>");
+        i++;
+      }
+      tokens.push({ kind: "b", html: '<ul class="md-ul">' + items.join("") + "</ul>" });
+      continue;
+    }
+
+    if (/^\s*\d+[.)]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) {
+        items.push("<li>" + renderInline(lines[i].replace(/^\s*\d+[.)]\s+/, "")) + "</li>");
+        i++;
+      }
+      tokens.push({ kind: "b", html: '<ol class="md-ol">' + items.join("") + "</ol>" });
+      continue;
+    }
+
+    const buf = [line]; i++;
+    while (i < lines.length && !/^\s*$/.test(lines[i]) && !isBlockStart(lines[i])) {
+      buf.push(lines[i]); i++;
+    }
+    tokens.push({ kind: "b", html:
+      '<p class="md-p">' + renderInline(buf.join("\n")).replace(/\n/g, "<br>") + "</p>" });
+  }
+  return tokens;
+}
+
+function buildSections(tokens) {
+  const root = { level: 0, items: [] };
+  const stack = [root];
+  for (const t of tokens) {
+    if (t.kind === "h") {
+      while (stack.length > 1 && stack[stack.length - 1].level >= t.level) stack.pop();
+      const node = { level: t.level, html: t.html, items: [] };
+      stack[stack.length - 1].items.push({ kind: "h", node });
+      stack.push(node);
+    } else {
+      stack[stack.length - 1].items.push({ kind: "b", html: t.html });
+    }
+  }
+  return root;
+}
+
+function renderSection(items) {
+  return items.map(it => {
+    if (it.kind !== "h") return it.html;
+    const key = "h" + it.node.level + ":" + it.node.html.replace(/<[^>]+>/g, "").trim();
+    const collapsed = previewFolded.has(key);
+    return '<section class="psec' + (collapsed ? " collapsed" : "") + '" data-key="' + escapeAttr(key) + '">'
+      + '<div class="psec-h">' + it.node.html + "</div>"
+      + '<div class="psec-body">' + renderSection(it.node.items) + "</div>"
+      + "</section>";
+  }).join("");
+}
+
+/* ---------------------------------------------------------------- safety */
+function safeUrl(u) {
+  const s = String(u || "").trim();
+  if (/^(javascript|vbscript|data):/i.test(s) && !/^data:image\//i.test(s)) return "#";
+  return s;
+}
+
+/* ================================================================ STATE  */
+const STORE_KEY = "eracig.workbench.v1";
+const HISTORY_LIMIT = 60;
+const TABS = ["editor", "preview", "issues", "prompts", "data"];
+const UI_DEFAULTS = { tab: "editor", fontSize: 16 };
+
+let state = null;
+let previewFolded = new Set();
+let activeFilters = { E: true, R: true, A: true, C: true, iG: true, open: false };
+
+function defaultPrompts() { return { doc: DEFAULT_DOC_PROMPT, json: DEFAULT_JSON_PROMPT }; }
+
+function newProject(name, md) {
+  return {
+    id: uid(), name: name || "Untitled spec", md: md || "", issues: [], resolutions: {}, folded: [],
+    history: { stack: [md || ""], index: 0 }, createdAt: Date.now(), updatedAt: Date.now()
+  };
+}
+
+/* First-run example so the app opens with something to work on. */
+function sampleProject() {
+  const md = [
+    "# Fieldnote: Site Inspection App", "",
+    "## Problem and solution",
+    "Site inspectors retype their notes at the office, which wastes about a day a week. Fieldnote lets them capture an inspection on a phone, offline, and sync it later.", "",
+    "## Launch scope",
+    "- Create an inspection from a template",
+    "- Add photos and notes to each checklist item",
+    "- Work offline and sync later",
+    "- Export a PDF report", "",
+    "## Roles",
+    "Inspectors can edit their own inspections. Managers can view every inspection. Admins can manage templates.", "",
+    "## Capture",
+    "Inspectors can quickly add photos to any checklist item. Photos are compressed before upload.", "",
+    "## Sync",
+    "Inspections sync when the phone regains a connection.",
+    "Inspectors can edit their own inspections while offline.", "",
+    "## Retention",
+    "Inspection data is kept for 12 months.", "",
+    "## Privacy",
+    "Inspection data is kept for 24 months, then deleted.", "",
+    "## Future ideas",
+    "Voice-to-text notes with a seamless, delightful experience. TBD whether to include AR overlays.", ""
+  ].join("\n");
+  const p = newProject("Fieldnote spec (example)", md);
+  const raw = [
+    { type: "A", where: ["quickly add photos to any checklist item"],
+      what: "quote: from Capture, it says \"Inspectors can quickly add photos to any checklist item.\"",
+      why: "\"Quickly\" is not measurable, so developers cannot tell what the capture flow must achieve or how to test it.",
+      solutions: ["add a photo to any checklist item in two taps or fewer"] },
+    { type: "C", where: ["Inspection data is kept for 12 months\\.", "Inspection data is kept for 24 months, then deleted\\."],
+      what: "quote: from Retention and Privacy, it says \"kept for 12 months\" and \"kept for 24 months, then deleted\"",
+      why: "Two different retention periods mean a developer must guess which one to enforce, and one of them may break a compliance rule.",
+      solutions: [
+        { label: "Keep 12 months", where: ["Inspection data is kept for 24 months, then deleted\\."], replace: ["Inspection data is kept for 12 months, then deleted."] },
+        { label: "Keep 24 months", where: ["Inspection data is kept for 12 months\\."], replace: ["Inspection data is kept for 24 months."] }
+      ] },
+    { type: "iG", where: ["## Sync"],
+      what: "quote: from Launch scope, it says \"Export a PDF report\"",
+      why: "The PDF export is in launch scope but nothing says who can export it or what it contains, so it cannot be built.",
+      solutions: ["## Reports\nManagers can export a finished inspection as a PDF that lists each checklist answer with its notes and photos.\n\n## Sync"] },
+    { type: "R", where: ["Inspectors can edit their own inspections while offline\\."],
+      what: "quote: from Sync, it says \"Inspectors can edit their own inspections while offline.\"",
+      why: "The same permission is stated in Roles and Sync with no canonical source, so a developer may build it twice.",
+      solutions: ["Offline edits follow the permissions in Roles."] },
+    { type: "E", where: ["TBD whether to include AR overlays\\."],
+      what: "quote: from Future ideas, it says \"TBD whether to include AR overlays.\"",
+      why: "A leftover hedge leaves the developer unsure whether AR overlays are part of the release.",
+      solutions: [""] }
+  ];
+  p.issues = raw.map(normalizeIssue).filter(Boolean);
+  const first = getRes(p, p.issues[0]);
+  first.mode = "builtin"; first._closed = false;
+  return p;
+}
+
+function defaultState() {
+  const p = sampleProject();
+  return { version: 1, activeId: p.id, projects: [p], prompts: defaultPrompts(), ui: Object.assign({}, UI_DEFAULTS, { tab: "issues" }) };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (!s || !Array.isArray(s.projects) || !s.projects.length) return null;
+    return migrate(s);
+  } catch (e) { return null; }
+}
+
+function migrate(s) {
+  s.ui = Object.assign({}, UI_DEFAULTS, s.ui || {});
+  if (TABS.indexOf(s.ui.tab) < 0) s.ui.tab = "editor";
+  s.ui.fontSize = Math.max(13, Math.min(22, +s.ui.fontSize || 16));
+  s.prompts = Object.assign(defaultPrompts(), s.prompts || {});
+  s.projects.forEach(p => {
+    p.issues = p.issues || [];
+    p.resolutions = p.resolutions || {};
+    p.folded = p.folded || [];
+    p.md = p.md || "";
+    if (!p.history || !Array.isArray(p.history.stack) || !p.history.stack.length) p.history = { stack: [p.md], index: 0 };
+    p.history.index = Math.min(p.history.index, p.history.stack.length - 1);
+  });
+  if (!s.projects.some(p => p.id === s.activeId)) s.activeId = s.projects[0].id;
+  return s;
+}
+
+function buildSavePayload() {
+  /* History is left out: it is large and migrate() rebuilds it from the current text. */
+  return {
+    version: state.version, activeId: state.activeId, prompts: state.prompts, ui: state.ui,
+    projects: state.projects.map(p => ({
+      id: p.id, name: p.name, md: p.md, issues: p.issues, resolutions: p.resolutions,
+      folded: p.folded, createdAt: p.createdAt, updatedAt: p.updatedAt
+    }))
+  };
+}
+
+let saveWarned = false;
+function persist() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(buildSavePayload())); }
+  catch (e) {
+    if (!saveWarned) { saveWarned = true; toast("Could not save in this browser. Use Data > Save backup.", "err"); }
+  }
+}
+const saveState = debounce(persist, 1200);
+
+/* ============================================================ PROJECTS   */
+function activeProject() {
+  let p = state.projects.find(x => x.id === state.activeId);
+  if (!p) { p = state.projects[0]; state.activeId = p ? p.id : null; }
+  return p;
+}
+
+function getRes(p, issue) {
+  if (!p.resolutions) p.resolutions = {};
+  let r = p.resolutions[issue.id];
+  if (!r) {
+    r = { mode: "none", altIndex: 0, custom: { where: [""], replace: [""], literal: [true] },
+          applied: false, snapshot: null, notes: "", _closed: true };
+    p.resolutions[issue.id] = r;
+  }
+  if (!("_closed" in r)) r._closed = true;
+  if (!r.custom) r.custom = { where: [""], replace: [""], literal: [true] };
+  if (!Array.isArray(r.custom.where))   r.custom.where   = [""];
+  if (!Array.isArray(r.custom.replace)) r.custom.replace = [""];
+  if (!Array.isArray(r.custom.literal)) r.custom.literal = r.custom.where.map(() => true);
+  return r;
+}
+
+function isOpenIssue(p, i) { const r = getRes(p, i); return r.mode === "none" && !r.applied; }
+
+/* ============================================================== EDITOR   */
+const ta = $("#editor"), hl = $("#edHl"), edScroll = $("#edScroll");
+let hlLines = [];
+let historyTimer = null;
+
+function lineHTML(t) { return '<div class="l">' + highlightLine(t) + "</div>"; }
+
+/* Redraw only the lines that changed, so typing stays instant on long specs. */
+function updateHl(text) {
+  const nl = String(text).split("\n"), old = hlLines;
+  const max = Math.min(nl.length, old.length);
+  let a = 0; while (a < max && nl[a] === old[a]) a++;
+  let b = 0; while (b < max - a && nl[nl.length - 1 - b] === old[old.length - 1 - b]) b++;
+  const kids = hl.children;
+  for (let i = old.length - b - 1; i >= a; i--) if (kids[i]) kids[i].remove();
+  const ins = nl.slice(a, nl.length - b);
+  if (ins.length) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = ins.map(lineHTML).join("");
+    hl.insertBefore(tpl.content, kids[a] || null);
+  }
+  hlLines = nl;
+}
+
+function grow() { ta.style.height = Math.max(hl.offsetHeight, edScroll.clientHeight) + "px"; }
+
+function setEditorText(md) {
+  ta.value = md || "";
+  hlLines = []; hl.innerHTML = "";
+  updateHl(ta.value);
+  grow();
+}
+
+function applyFontSize() {
+  const fs = state.ui.fontSize || 16;
+  document.documentElement.style.setProperty("--ed-fs", fs + "px");
+  document.documentElement.style.setProperty("--gutter", (fs >= 18 ? 52 : 44) + "px");
+  grow();
+}
+
+function onEditorInput() {
+  const p = activeProject();
+  if (!p) return;
+  p.md = ta.value;
+  p.updatedAt = Date.now();
+  updateHl(p.md);
+  grow();
+  updateStats();
+  saveState();
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(() => pushHistory(activeProject()), 900);
+}
+ta.addEventListener("input", onEditorInput);
+ta.addEventListener("keydown", e => {
+  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); wrapInsert("  "); }
+});
+
+function wrapInsert(text) {
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  ta.setRangeText(text, s, e, "end");
+  onEditorInput();
+}
+
+function wrapSel(open, close) {
+  const s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e);
+  ta.setRangeText(open + sel + close, s, e, "end");
+  if (sel) ta.setSelectionRange(s + open.length, s + open.length + sel.length);
+  else ta.setSelectionRange(s + open.length, s + open.length);
+  onEditorInput();
+}
+
+function mapLines(fn) {
+  const v = ta.value, s = ta.selectionStart;
+  let e = ta.selectionEnd;
+  if (e > s && v[e - 1] === "\n") e--;
+  const ls = v.lastIndexOf("\n", s - 1) + 1;
+  let le = v.indexOf("\n", e); if (le < 0) le = v.length;
+  const block = v.slice(ls, le).split("\n").map(fn).join("\n");
+  ta.setRangeText(block, ls, le, "end");
+  ta.setSelectionRange(ls, ls + block.length);
+  onEditorInput();
+}
+
+const KEYS = {
+  h: () => mapLines(l => { const m = l.match(/^(#{1,6}) /); if (!m) return "## " + l; return m[1].length < 4 ? "#" + l : l.replace(/^#{1,6} /, ""); }),
+  b: () => wrapSel("**", "**"),
+  i: () => wrapSel("_", "_"),
+  c: () => wrapSel("`", "`"),
+  l: () => mapLines(l => /^\s*[-*+] /.test(l) ? l.replace(/^(\s*)[-*+] /, "$1") : "- " + l),
+  q: () => mapLines(l => /^>\s?/.test(l) ? l.replace(/^>\s?/, "") : "> " + l),
+  t: () => { if (ta.selectionStart === ta.selectionEnd) wrapInsert("  "); else mapLines(l => "  " + l); },
+  done: () => ta.blur()
+};
+$("#keystrip").addEventListener("pointerdown", e => { if (e.target.closest("button")) e.preventDefault(); });
+$("#keystrip").addEventListener("click", e => {
+  const b = e.target.closest("button[data-k]");
+  if (b && KEYS[b.dataset.k]) KEYS[b.dataset.k]();
+});
+
+function scrollToLine(n, flash) {
+  const el = hl.children[n];
+  if (!el) return;
+  edScroll.scrollTop = Math.max(0, el.offsetTop - edScroll.clientHeight / 3);
+  if (flash) { el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1800); }
+}
+
+function updateStats() {
+  const p = activeProject(), el = $("#docStats");
+  if (!p) { el.textContent = ""; return; }
+  const md = p.md || "";
+  el.textContent = md.split("\n").length + " lines · " + (md.match(/\S+/g) || []).length + " words";
+}
+
+/* =============================================================== PREVIEW */
+function renderPreview() {
+  const p = activeProject(), el = $("#preview"), sc = $("#previewScroll");
+  if (!p) { el.innerHTML = ""; return; }
+  const st = sc.scrollTop;
+  const tree = buildSections(parseBlocks(p.md));
+  el.innerHTML = renderSection(tree.items) || '<div class="empty"><b>Nothing to preview yet</b>Write or paste Markdown in the Editor tab.</div>';
+  sc.scrollTop = st;
+}
+
+/* ============================================================== HISTORY  */
+function pushHistory(p, force) {
+  if (!p) return;
+  if (!p.history) p.history = { stack: [p.md], index: 0 };
+  if (p.history.stack[p.history.index] === p.md && !force) return;
+  p.history.stack = p.history.stack.slice(0, p.history.index + 1);
+  p.history.stack.push(p.md);
+  if (p.history.stack.length > HISTORY_LIMIT) p.history.stack.shift();
+  p.history.index = p.history.stack.length - 1;
+  updateUndoButtons();
+  saveState();
+}
+
+function refreshEditor(full) {
+  const p = activeProject();
+  setEditorText(p ? p.md : "");
+  updateStats();
+  $("#projName").textContent = p ? p.name : "Project";
+  if (full) { renderIssueList(); renderProjectStats(); }
+}
+
+function undo() {
+  const p = activeProject();
+  if (!p || !p.history || p.history.index <= 0) return;
+  clearTimeout(historyTimer); pushHistory(p);
+  p.history.index--;
+  p.md = p.history.stack[p.history.index];
+  refreshEditor(true); saveState(); updateUndoButtons();
+}
+function redo() {
+  const p = activeProject();
+  if (!p || !p.history || p.history.index >= p.history.stack.length - 1) return;
+  p.history.index++;
+  p.md = p.history.stack[p.history.index];
+  refreshEditor(true); saveState(); updateUndoButtons();
+}
+function updateUndoButtons() {
+  const p = activeProject();
+  if (!p) return;
+  $("#btnUndo").disabled = !p.history || p.history.index <= 0;
+  $("#btnRedo").disabled = !p.history || p.history.index >= p.history.stack.length - 1;
+}
+
+/* =============================================================== FIXES   */
+/* =============================================================== FIXES   */
+function buildFixFromRes(issue, res) {
+  if (res.mode === "builtin") {
+    const alt = issue.alts[res.altIndex] || issue.alts[0];
+    if (!alt) return null;
+    return { where: alt.where.slice(), replace: alt.replace.slice(), literal: alt.where.map(() => false) };
+  }
+  if (res.mode === "custom") {
+    const where = [], replace = [], literal = [];
+    res.custom.where.forEach((w, i) => {
+      if (w && w.length) {
+        where.push(w);
+        replace.push(res.custom.replace[i] || "");
+        literal.push(res.custom.literal[i] !== false);
+      }
+    });
+    if (!where.length) return null;
+    return { where, replace, literal };
+  }
+  return null;
+}
+
+function applyFix(text, fix) {
+  let out = text;
+  const applied = [], failed = [];
+  for (let i = 0; i < fix.where.length; i++) {
+    const pat = fix.where[i];
+    const rep = fix.replace[i] == null ? "" : fix.replace[i];
+    const literal = fix.literal ? fix.literal[i] : false;
+    const rx = makeRegex(pat, literal);
+    if (!rx) { failed.push(i); continue; }
+    const probe = makeRegex(pat, literal);
+    if (!probe) { failed.push(i); continue; }
+    if (!probe.test(out)) { failed.push(i); continue; }
+    out = out.replace(rx, rep);
+    applied.push(i);
+  }
+  return { text: out, applied, failed };
+}
+
+function applyResolution(issueId, silent) {
+  const p = activeProject();
+  const issue = p.issues.find(x => x.id === issueId);
+  if (!issue) return false;
+  const res = getRes(p, issue);
+  if (res.mode === "discard") { res.applied = false; return true; }
+  const fix = buildFixFromRes(issue, res);
+  if (!fix) { if (!silent) toast("Nothing to apply. Set a location and replacement first.", "err"); return false; }
+
+  const snapshot = p.md;
+  const result = applyFix(p.md, fix);
+  if (!result.applied.length) {
+    if (!silent) toast("No match found for this issue's selector.", "err");
+    res.failed = true;
+    return false;
+  }
+  pushHistory(p, true);
+  p.md = result.text;
+  p.updatedAt = Date.now();
+  res.applied = true;
+  res.appliedAt = Date.now();
+  res.snapshot = snapshot;
+  res.failed = result.failed.length > 0;
+  res.failedCount = result.failed.length;
+  pushHistory(p, true);
+  refreshEditor(false);
+  saveState();
+  if (!silent) {
+    if (result.failed.length) toast("Applied " + result.applied.length + "; " + result.failed.length + " selector(s) did not match.", "err");
+    else toast("Issue applied.", "ok");
+  }
+  return true;
+}
+
+function revertResolution(issueId) {
+  const p = activeProject();
+  const issue = p.issues.find(x => x.id === issueId);
+  if (!issue) return;
+  const res = getRes(p, issue);
+  if (!res.applied || res.snapshot == null) { toast("Nothing to revert.", "err"); return; }
+  pushHistory(p, true);
+  p.md = res.snapshot;
+  res.applied = false;
+  res.snapshot = null;
+  pushHistory(p, true);
+  refreshEditor(false);
+  saveState();
+  toast("Reverted.", "ok");
+}
+
+function applyAllResolved() {
+  const p = activeProject();
+  let ok = 0, fail = 0;
+  p.issues.forEach(issue => {
+    const res = getRes(p, issue);
+    if (res.applied || res.mode === "none" || res.mode === "discard") return;
+    if (applyResolution(issue.id, true)) ok++; else fail++;
+  });
+  if (ok || fail) toast("Applied " + ok + " issue" + (ok === 1 ? "" : "s") + (fail ? ", " + fail + " failed" : "") + ".", fail ? "err" : "ok");
+  else toast("No pending resolutions. Choose a fix on an issue first.", "err");
+  renderIssueList();
+}
+
+/* ============================================================== ISSUES UI */
+function issueStatus(issue, res) {
+  if (res.applied)             return { cls: "s-applied", text: "Applied" };
+  if (res.mode === "discard")  return { cls: "s-discard", text: "Discarded" };
+  if (res.mode === "builtin")  return { cls: "s-builtin", text: "Built-in fix" };
+  if (res.mode === "custom")   return { cls: "s-custom",  text: "Custom fix" };
+  return { cls: "s-open", text: "Open" };
+}
+
+function truncate(s, n) {
+  s = String(s || "").replace(/\s+/g, " ").trim();
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+function serializeIssue(issue, res) {
+  const base = { type: issue.type, where: issue.where.slice(), what: issue.what, why: issue.why };
+  if (res && res.mode === "custom") {
+    const fix = buildFixFromRes(issue, res);
+    if (fix) { base.where = fix.where; base.solutions = fix.replace; return base; }
+  }
+  base.solutions = issue.alts[0] ? issue.alts[0].replace.slice() : [];
+  return base;
+}
+
+const CHEV = '<svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg>';
+
+function modeOption(issue, res, value, title, sub, disabled) {
+  return '<label class="mode-option">'
+    + '<input type="radio" name="res-' + issue.id + '" data-act="mode" value="' + value + '"'
+    + (res.mode === value ? " checked" : "") + (disabled ? " disabled" : "") + ">"
+    + '<span class="radio-dot"></span>'
+    + '<span class="mode-text"><span class="mode-title">' + title + '</span><span class="mode-sub">' + sub + "</span></span>"
+    + "</label>";
+}
+
+function issueHTML(issue) {
+  const p = activeProject();
+  const res = getRes(p, issue);
+  const st = issueStatus(issue, res);
+  const closed = res._closed === false ? "" : " closed";
+
+  let panel = "";
+  if (res.mode === "builtin" && issue.alts.length) {
+    const alt = issue.alts[res.altIndex] || issue.alts[0];
+    if (issue.alts.length > 1) {
+      panel += '<div class="alt-picker">';
+      issue.alts.forEach((a, i) => {
+        panel += '<button class="alt-tab' + (res.altIndex === i ? " on" : "") + '" data-act="alt" data-i="' + i + '">'
+          + escapeHtml(a.label || ("Option " + (i + 1))) + "</button>";
+      });
+      panel += "</div>";
+    }
+    panel += '<div class="diff">';
+    alt.where.forEach((w, i) => {
+      panel += '<div class="diff-row"><span class="diff-old">' + escapeHtml(w) + "</span>"
+        + '<span class="diff-new">' + escapeHtml(alt.replace[i] || "(delete)") + "</span></div>";
+    });
+    panel += "</div>";
+  } else if (res.mode === "custom") {
+    panel += '<div class="custom-rows">';
+    res.custom.where.forEach((w, i) => {
+      panel += '<div class="custom-row"><div class="custom-row-head"><span>Location ' + (i + 1) + "</span>"
+        + '<button class="mini" data-act="useselection" data-i="' + i + '">Use selection</button>'
+        + (res.custom.where.length > 1 ? '<button class="mini" data-act="delrow" data-i="' + i + '">Remove</button>' : "")
+        + '<label class="lit-toggle"><input type="checkbox" data-act="literal" data-i="' + i + '"'
+        + (res.custom.literal[i] !== false ? " checked" : "") + "> Literal text</label></div>"
+        + '<textarea rows="2" data-act="where" data-i="' + i + '" placeholder="Text or regex to find" autocapitalize="off" autocorrect="off" spellcheck="false">' + escapeHtml(w) + "</textarea>"
+        + '<textarea rows="2" class="rep" data-act="replace" data-i="' + i + '" placeholder="Replace with" autocapitalize="off" autocorrect="off" spellcheck="false">' + escapeHtml(res.custom.replace[i] || "") + "</textarea></div>";
+    });
+    panel += '<button class="btn ghost" data-act="addrow">+ Add location</button></div>';
+  }
+
+  const warnHTML = (res.failed && res.applied) ? '<div class="warn">Some selectors did not match when this was applied.</div>' : "";
+
+  const whereRows = issue.where.map((w, i) =>
+    '<div class="where-row"><code>' + escapeHtml(w) + "</code>"
+    + '<div class="where-actions"><button data-act="reveal" data-i="' + i + '">Find in editor</button>'
+    + '<button data-act="test" data-i="' + i + '">Test match</button></div></div>').join("");
+
+  return '<div class="issue' + (res.applied ? " applied" : "") + (res.mode === "discard" ? " discarded" : "") + closed
+    + '" data-id="' + escapeAttr(issue.id) + '" data-type="' + escapeAttr(issue.type) + '">'
+    + '<button class="issue-head" data-act="collapse" aria-expanded="' + (closed ? "false" : "true") + '">'
+    +   '<span class="badge b-' + escapeAttr(issue.type) + '">' + escapeHtml(issue.type) + "</span>"
+    +   '<span class="head-main"><span class="issue-title">' + escapeHtml(truncate(issue.what || issue.why || "(no description)", 160)) + "</span>"
+    +   '<span class="status-pill ' + st.cls + '">' + escapeHtml(st.text) + "</span></span>" + CHEV
+    + "</button>"
+    + '<div class="issue-body">'
+    +   (issue.what ? '<div class="section"><div class="lbl">What</div><p class="quote">' + escapeHtml(issue.what) + "</p></div>" : "")
+    +   (issue.why ? '<div class="section"><div class="lbl">Why</div><p class="text">' + escapeHtml(issue.why) + "</p></div>" : "")
+    +   (issue.where.length ? '<div class="section"><div class="lbl">Where · ' + issue.where.length + " selector" + (issue.where.length > 1 ? "s" : "") + '</div><div class="wheres">' + whereRows + "</div></div>" : "")
+    +   '<div class="section"><div class="lbl">Resolution</div><div class="resolve-box">'
+    +     modeOption(issue, res, "builtin", "Use a proposed fix", issue.alts.length ? issue.alts.length + " option" + (issue.alts.length > 1 ? "s" : "") + " available" : "No proposed fix", !issue.alts.length)
+    +     modeOption(issue, res, "custom", "Enter my own fix", "Find and replace manually")
+    +     modeOption(issue, res, "discard", "Discard this issue", "Mark as not applicable")
+    +   "</div></div>"
+    +   (panel ? '<div class="mode-panel">' + panel + "</div>" : "")
+    +   warnHTML
+    +   '<div class="actions"><button class="btn act-apply" data-act="apply">Apply</button>'
+    +     '<button class="btn act-revert" data-act="revert"' + (res.applied ? "" : " disabled") + ">Revert</button>"
+    +     '<button class="btn act-copy" data-act="copyjson">Copy JSON</button></div>'
+    + "</div></div>";
+}
+
+function renderIssueList() {
+  const p = activeProject();
+  const list = $("#issuesList"), sc = $("#issuesScroll");
+  if (!p) { list.innerHTML = ""; return; }
+  const open = p.issues.filter(i => isOpenIssue(p, i)).length;
+  const badge = $("#issueBadge");
+  badge.textContent = open ? String(Math.min(open, 99)) : "";
+  const st = sc.scrollTop;
+  if (!p.issues.length) {
+    list.innerHTML = '<div class="empty"><b>No ERACiG issues yet</b>Open the Prompts tab to generate them with an AI, then paste the JSON in the Data tab or import a .json file from the menu.</div>';
+    $("#issueCount").textContent = "0 issues";
+    return;
+  }
+  const filtered = p.issues.filter(i => {
+    if (activeFilters[i.type] === false) return false;
+    if (activeFilters.open && !isOpenIssue(p, i)) return false;
+    return true;
+  });
+  $("#issueCount").textContent = filtered.length + " of " + p.issues.length + " issue" + (p.issues.length === 1 ? "" : "s");
+  list.innerHTML = filtered.length ? filtered.map(issueHTML).join("") : '<div class="empty">No issues match the current filters.</div>';
+  sc.scrollTop = st;
+}
+
+function findIssue(id) { const p = activeProject(); return p ? p.issues.find(i => i.id === id) : null; }
+
+function revealMatch(pat, testOnly) {
+  const p = activeProject();
+  const rx = makeRegex(pat, false);
+  if (!rx) { toast("That is not a valid regular expression.", "err"); return; }
+  const m = rx.exec(p.md);
+  if (!m) { toast("No match in the document.", "err"); return; }
+  if (testOnly) { toast("Match found: " + JSON.stringify(m[0].slice(0, 70)), "ok"); return; }
+  const lineNo = p.md.slice(0, m.index).split("\n").length - 1;
+  setTab("editor");
+  requestAnimationFrame(() => {
+    ta.focus({ preventScroll: true });
+    ta.setSelectionRange(m.index, m.index + m[0].length);
+    scrollToLine(lineNo, true);
+    setTimeout(() => scrollToLine(lineNo, false), 350);
+  });
+}
+
+$("#issuesList").addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const card = e.target.closest(".issue");
+  if (!card) return;
+  const issue = findIssue(card.dataset.id);
+  if (!issue) return;
+  const p = activeProject();
+  const res = getRes(p, issue);
+  const act = btn.dataset.act;
+  const i = parseInt(btn.dataset.i || "0", 10);
+
+  if (act === "collapse") {
+    res._closed = !res._closed;
+    card.classList.toggle("closed");
+    btn.setAttribute("aria-expanded", res._closed ? "false" : "true");
+    saveState(); return;
+  }
+  if (act === "alt") { res.altIndex = i; res.mode = "builtin"; renderIssueList(); saveState(); return; }
+  if (act === "addrow") {
+    res.custom.where.push(""); res.custom.replace.push(""); res.custom.literal.push(true);
+    renderIssueList(); saveState(); return;
+  }
+  if (act === "delrow") {
+    res.custom.where.splice(i, 1); res.custom.replace.splice(i, 1); res.custom.literal.splice(i, 1);
+    if (!res.custom.where.length) { res.custom.where.push(""); res.custom.replace.push(""); res.custom.literal.push(true); }
+    renderIssueList(); saveState(); return;
+  }
+  if (act === "useselection") {
+    const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    if (!sel) { toast("Select text in the Editor tab first, then come back.", "err"); return; }
+    res.custom.where[i] = sel; res.custom.literal[i] = true; res.mode = "custom";
+    renderIssueList(); saveState();
+    toast("Location captured from your selection.", "ok"); return;
+  }
+  if (act === "apply") { applyResolution(issue.id); renderIssueList(); return; }
+  if (act === "revert") { revertResolution(issue.id); renderIssueList(); return; }
+  if (act === "copyjson") { copyOrShow(JSON.stringify(serializeIssue(issue, res), null, 2), "Copy issue JSON", "Issue JSON copied."); return; }
+  if (act === "reveal" || act === "test") { revealMatch(issue.where[i], act === "test"); return; }
+});
+
+$("#issuesList").addEventListener("change", e => {
+  const el = e.target, card = el.closest(".issue");
+  if (!card) return;
+  const issue = findIssue(card.dataset.id);
+  if (!issue) return;
+  const p = activeProject(), res = getRes(p, issue);
+  const i = parseInt(el.dataset.i || "0", 10);
+  if (el.dataset.act === "mode") {
+    res.mode = el.value;
+    if (res.mode === "discard") res.applied = false;
+    renderIssueList(); saveState();
+  } else if (el.dataset.act === "literal") { res.custom.literal[i] = el.checked; saveState(); }
+});
+
+$("#issuesList").addEventListener("input", e => {
+  const el = e.target, card = el.closest(".issue");
+  if (!card) return;
+  const issue = findIssue(card.dataset.id);
+  if (!issue) return;
+  const res = getRes(activeProject(), issue);
+  const i = parseInt(el.dataset.i || "0", 10);
+  if (el.dataset.act === "where") { res.custom.where[i] = el.value; saveState(); }
+  else if (el.dataset.act === "replace") { res.custom.replace[i] = el.value; saveState(); }
+});
+/* ================================================================ PROMPTS */
+const DEFAULT_DOC_PROMPT = `You are a senior business analyst performing an ERACiG review of an application specification.
+
+ERACiG stands for:
+
+  E  - Extraneous information: content that carries no build action, or that could lead a developer to build something the released app shouldn't have.
+       E1. Unmarked out-of-scope or future-phase feature. A feature is specified at build-ready detail (flows, fields, rules), but the spec's own scope signals show it is not part of this release, or no stated problem or solution requires it, and no section labels it post-launch or out of scope. Developer impact: builds it unnecessarily, or stalls asking whether to. Do not flag features explicitly labeled out of scope or post-launch. If one section labels a feature post-launch and another specifies it as launch behavior, report it as a Conflict.
+       E2. Orphaned definition. A field, role, config flag, error code, endpoint, screen, billing or entitlement line, or UI flow is defined but referenced by no feature or flow, or a screen has no entry point. Developer impact: cannot tell whether it was forgotten or is safe to skip. Do not flag items with a declared external consumer (admin tools, third-party APIs) or glossary entries. Tiebreak for billing or entitlement lines: if the feature is described elsewhere as in scope, report a Gap; if it appears nowhere else, report it here.
+       E3. Stale or superseded content. Content that a signal in the spec marks as outdated: a changelog entry, an entity renamed elsewhere, or a term that appears once under a name used nowhere else. Developer impact: implements obsolete behavior. Do not flag content with no staleness signal.
+       E4. Cross-app leakage. The spec describes another app's behavior or data with no declared integration point. Developer impact: builds capability the app shouldn't have, or shares data across apps without authorization. Do not flag declared shared components and integrations. If an integration is declared but under-specified, report a Gap.
+       E5. Non-actionable narrative in requirement sections. Vision or marketing language ("seamless," "delightful") placed in a requirement section that no build action or test can be derived from. Developer impact: treats it as an acceptance criterion or invents an interpretation. Tiebreak: if the developer must make a design or performance decision to satisfy the statement (for example "fast"), report an Ambiguity.
+       E6. Hedge residue. TBD, maybe, consider, or decision-history notes left beside requirements. Developer impact: cannot tell what is decided. Do not flag items the spec explicitly labels as deferred. An in-scope hedge with no fallback behavior is an Ambiguity or Gap.
+
+  R  - Redundancies: identical content stated in more than one place with no canonical source declared.
+       R1. Restated requirement with no canonical source. The same requirement, rule, or obligation appears in two or more sections in identical form, and no section is named as the source of truth. This includes retention, deletion, consent, and audit-logging rules, which are high-risk instances because a future edit to one copy creates a compliance conflict. Developer impact: unsure whether each mention is a separate implementation touchpoint or a repetition. Do not flag overview or summary mentions of a feature detailed elsewhere, explicit cross-references naming the canonical section, or repetition that appears only in examples.
+       R2. Repeated permission. The same subject, action, and resource appears in two or more sections with no canonical permissions matrix. Developer impact: unsure how many places to implement it, or which governs. Do not flag similar permissions on different resources — "Admin can delete" in two unrelated features is two permissions.
+       R3. Repeated validation or error-handling rule. The same rule is restated in three or more sections, and a change to it would require edits in multiple places. Developer impact: cannot tell whether each restatement is a unique variation, and may implement the rule several times. Do not flag two occurrences, or occurrences with a declared reference to a shared rule.
+       R4. Same feature under different names. Two sections describe features with the same actor, trigger, and outcome under different names, and neither references the other. State which details match and which differ. Developer impact: builds two features instead of one.
+       R5. Repeated state or status list. The same state list or transition set appears in more than one place. Developer impact: implements the states more than once, and the copies drift. Handling: if the lists differ, report a Conflict.
+
+  A  - Ambiguities: content with more than one reasonable reading, where the developer must guess.
+       - Requirements with unquantified qualifiers ("fast," "recent," "large") that force a design or performance decision.
+       - Terms used but never defined, or defined only implicitly.
+       - Undefined behavior for features that are enabled or in scope.
+       - In-scope hedges with no fallback behavior.
+       - Trigger conditions, actors, or outputs that are described in a way that supports more than one implementation.
+
+  C  - Conflicts: statements that cannot both be true.
+       - Contradictory requirements between sections.
+       - A core feature, boundary condition, or edge case described in more than one section with differing scope, trigger condition, or expected output.
+       - A data model or field defined in both a schema section and a UI flow section with conflicting types, constraints, or defaults.
+       - An API endpoint, SLA requirement, or contract described in two places with different request/response shapes or implied error handling.
+       - Retention or compliance periods that differ within the spec.
+       - State or status lists that differ between sections.
+       - Terms defined differently in different sections.
+       - Prescriptive implementation detail that contradicts the stated architecture.
+       - An example that contradicts the rule it illustrates.
+
+  iG - Information gaps: required content that is absent, so a developer cannot build the feature.
+       - Core or secondary features described in the problem, solution, or problem-and-solution statement with little or no spec for how they work.
+       - Boundary conditions or edge cases that will cause runtime failures.
+       - Features that appear in billing or config but have no implementation path, where the feature is described elsewhere as in scope.
+       - An example that introduces a rule not stated anywhere else.
+       - A screen or flow with no exit or dead end.
+       - An integration that is declared but under-specified.
+       - Missing scope signals (report once).
+       - Any other gap that means developers cannot build the corresponding feature.
+
+TASK
+Analyse the APP SPEC below and produce an ERACiG FINDINGS DOCUMENT.
+
+RULES
+1. Report only problems that will stall production of the app, or that will confuse a developer into making a decision that adversely affects the released app and its users. If a developer could reasonably resolve something from other sections of the spec, it is not a real problem.
+2. Output the findings document ONLY. Do not output JSON, do not output code, do not comment on these instructions.
+3. Structure the document by characteristic, in this exact order: E, R, A, C, iG. Use a level-2 heading for each characteristic that has findings, e.g. "## E - Extraneous information". Skip a characteristic entirely if it has no findings.
+4. Each problem is reported once, under the first category that fits, checked in this order: Extraneous information, Redundancy, Ambiguity, Conflict, information Gap. The report is presented in ERACiG order. Every flagged item cites the section or clause for each location involved and has one root cause only.
+5. Judge scope against the spec's own signals (problem and solution statement, launch scope, phase plan, feature list). If no scope signals exist, report that once as a Gap instead of flagging individual features.
+6. For each finding use this exact block:
+
+   ### <short title of the finding>
+   - **Where:** the section or clause for each location involved, plus the exact sentence(s) quoted verbatim.
+   - **What:** the offending text quoted verbatim, and an explanation of what is wrong with it.
+   - **Why:** the concrete impact on the developer / implementer — how they would be blocked or confused, or what adverse decision they might make.
+   - **Suggested fixes:** 2–3 possible solutions, written in plain language, ready to be dropped into the spec.
+
+7. Quote the spec verbatim in the Where and What fields. Never paraphrase.
+8. Refer to the spec by its section heading. Never use a line number or a user-journey number — those are renumbered as the document evolves.
+9. Do not propose a fix that needs information that is not in the spec. If information is missing, that is itself an iG finding: state exactly what is missing.
+10. Be exhaustive but do not invent problems. Every finding must be traceable to text in the spec.
+11. Number the findings within each characteristic (E1, E2, … R1, … iG1, …). Do not merge unrelated problems into one finding.
+12. Do NOT flag any of the following:
+    - Features mentioned in one section but not redundantly repeated in another.
+    - Normal onboarding patterns (generic content before profile completion).
+    - Documentation structure choices (for example, config vs. UI flows sections).
+    - Design rationale or "why" decisions.
+    - A summary or overview that briefly mentions a feature expanded in full elsewhere.
+    - A deliberate callback or cross-reference that explicitly names another section as the canonical source.
+    - Repetition that exists only in examples or illustrative descriptions, not in requirements.
+    - Features explicitly labeled out of scope or post-launch.
+13. Be rigorous. Question your own flags. If after deep thinking a segment, or even the entire spec, has no real findings, write "None found" rather than padding it with imagined problems.
+
+APP SPEC
+========
+{{APP_SPEC}}
+========
+
+Now produce the ERACiG findings document.`;
+
+const DEFAULT_JSON_PROMPT = `Now rewrite the ERACiG findings document above as a JSON array. Output ONLY the JSON, wrapped in md json code block. The array must be valid JSON.
+
+Each element has exactly these keys:
+{
+  "type": "E" | "R" | "A" | "C" | "iG",
+  "where": ["<regexp 1>", "<regexp 2>"],
+  "what": "quote: from <section>, it says \\"<verbatim offending text>\\"",
+  "why": "it could cause issues in <concrete developer impact>",
+  "solutions": ["<replacement 1>", "<replacement 2>"]
+}
+
+FIELD RULES
+- "where" holds one or more JavaScript-flavoured regular expressions (as strings) that select exactly the text to be replaced in the app spec.
+- "solutions" MUST have exactly the same length as "where". solutions[i] is the literal replacement text for where[i]. Use "" to delete text.
+- "what" quotes the offending passage verbatim, prefixed with a short location: quote: from <section>, it says "<text>".
+- "why" states the developer impact in one or two sentences.
+- Keep "what" and "why" short. They are read by a human in a side panel.
+
+REGEXP RULES (critical — a broken regex breaks the tool)
+1. Every regexp must be valid JavaScript and must compile. Compile it mentally before writing it.
+3. Use [\\s\\S]*? instead of .*? when a match may cross a line break. Never use the s flag.
+4. No lookbehind ((?<=...) or (?<!...)). No backreferences to groups that do not exist.
+5. Do NOT include the user-journey / section number in the regexp — numbers get renumbered. Anchor on surrounding words instead.
+6. Prefer the smallest unambiguous match. Add just enough surrounding context to make the match unique.
+7. Each regexp should match exactly one place in the document. If it cannot be made unique, widen the context until it is.
+8. Do not use inline flag syntax. If case-insensitivity is genuinely required, wrap the pattern in slashes with flags, e.g. "/check[- ]?in/i".
+9. Replacement text is plain text, not a regex. Write it exactly as it should appear in the spec. You may use $1, $2 ... to re-insert captured groups, and $$ for a literal dollar sign.
+10. Never match the whole document, a whole section heading, or an empty string.
+11. Every "where" regexp must actually appear in the spec. If the passage cannot be matched safely, drop the finding rather than guess.
+
+EXAMPLE
+
+Good:
+{ "type": "A", "where": ["guests? can (?:quickly )?check ?-?in"], "what": "quote: from User Journey Guest, it says \"guests can quickly check-in\"", "why": "\"quickly\" is not measurable, so the requirement cannot be tested or accepted.", "solutions": ["a guest can complete check-in in under 60 seconds"] }
+
+Good:
+{ "type": "iG", "where": ["The system shall send a confirmation email\."], "what": "quote: from Notifications, it says \"The system shall send a confirmation email.\"", "why": "No failure path is defined, so developers do not know what to do when the mail server is unreachable.", "solutions": ["The system shall send a confirmation email. If delivery fails, it retries three times over five minutes and then surfaces a non-blocking error banner to the user."] }
+
+Bad:
+{ "where": [".*check-in.*"] }        // matches everything, greedy, no anchoring
+Bad:
+{ "where": ["Section 3.2"] }          // depends on numbering
+
+Now output the JSON array only.`;
+function readFile(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result));
+    fr.onerror = () => rej(fr.error);
+    fr.readAsText(file);
+  });
+}
+
+function stripFileMarkers(text) {
+  return text
+    .replace(/^\s*\[file content begin\]\s*\n?/i, "")
+    .replace(/\n?\s*\[file content end\]\s*$/i, "");
+}
+
+/* ============================================================== SHEETS   */
+function openSheet(title, html, onClick, onClose) {
+  const back = document.createElement("div");
+  back.className = "sheet-back";
+  back.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + escapeAttr(title) + '"><div class="grip"></div><h3>'
+    + escapeHtml(title) + '</h3><div class="sheet-body">' + html + "</div></div>";
+  document.body.appendChild(back);
+  let closed = false;
+  const onKey = e => { if (e.key === "Escape") close(); };
+  function close() {
+    if (closed) return;
+    closed = true; back.remove();
+    document.removeEventListener("keydown", onKey);
+    if (onClose) onClose();
+  }
+  document.addEventListener("keydown", onKey);
+  back.addEventListener("click", e => {
+    if (e.target === back) { close(); return; }
+    const el = e.target.closest("[data-s]");
+    if (el && onClick) onClick(el.dataset.s, el, close);
+  });
+  return { el: back, close };
+}
+
+function promptModal(title, value) {
+  return new Promise(resolve => {
+    let result = null;
+    const sh = openSheet(title, '<input class="fld" type="text" id="pmInput" value="' + escapeAttr(value || "") + '" autocapitalize="sentences">'
+      + '<div class="row"><button class="btn ghost" data-s="cancel">Cancel</button><button class="btn primary" data-s="ok">Save</button></div>',
+      (k, el, close) => { if (k === "ok") result = $("#pmInput", sh.el).value; close(); },
+      () => resolve(result));
+    const input = $("#pmInput", sh.el);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { result = input.value; sh.close(); } });
+    setTimeout(() => { input.focus(); input.select(); }, 60);
+  });
+}
+
+function confirmModal(title, msg, okLabel) {
+  return new Promise(resolve => {
+    let result = false;
+    openSheet(title, "<p>" + escapeHtml(msg) + '</p><div class="row"><button class="btn ghost" data-s="cancel">Cancel</button>'
+      + '<button class="btn danger" data-s="ok">' + escapeHtml(okLabel || "Confirm") + "</button></div>",
+      (k, el, close) => { result = k === "ok"; close(); }, () => resolve(result));
+  });
+}
+
+function openTextSheet(title, text, note) {
+  const sh = openSheet(title, (note ? "<p>" + escapeHtml(note) + "</p>" : "")
+    + '<textarea class="fld" id="tsText" readonly></textarea>'
+    + '<div class="row"><button class="btn primary" data-s="copy">Copy</button><button class="btn ghost" data-s="done">Done</button></div>',
+    async (k, el, close) => {
+      if (k === "done") { close(); return; }
+      const t = $("#tsText", sh.el);
+      t.focus(); t.select(); t.setSelectionRange(0, t.value.length);
+      if (await copyText(text)) toast("Copied.", "ok"); else toast("Press and hold the selected text, then choose Copy.", "err");
+    });
+  const t = $("#tsText", sh.el);
+  t.value = text;
+  setTimeout(() => { t.focus(); t.select(); t.setSelectionRange(0, text.length); }, 80);
+}
+
+function sheetRow(key, title, sub, extra) {
+  return '<button class="srow' + (extra || "") + '" data-s="' + escapeAttr(key) + '"><span class="st"><b>' + escapeHtml(title) + "</b>"
+    + (sub ? "<span>" + escapeHtml(sub) + "</span>" : "") + "</span></button>";
+}
+
+/* ============================================================ CLIPBOARD  */
+function fallbackCopy(text) {
+  const t = document.createElement("textarea");
+  t.value = text; t.setAttribute("readonly", "");
+  t.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-size:16px";
+  document.body.appendChild(t);
+  t.select(); t.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  t.remove();
+  return ok;
+}
+async function copyText(text) {
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
+  return fallbackCopy(text);
+}
+async function copyOrShow(text, title, okMsg) {
+  if (await copyText(text)) toast(okMsg || "Copied.", "ok");
+  else openTextSheet(title || "Copy text", text, "Your browser blocked automatic copying. Copy the text below.");
+}
+
+/* ============================================================ SAVE FILES */
+let dlCap;
+async function getDownloads() {
+  if (dlCap !== undefined) return dlCap;
+  try { dlCap = (window.claude && window.claude.use) ? await window.claude.use("downloads") : null; }
+  catch (e) { dlCap = null; }
+  return dlCap;
+}
+async function saveFile(name, content) {
+  if (!content) { toast("There is nothing to save yet.", "err"); return; }
+  const dl = await getDownloads();
+  const fallback = () => openTextSheet("Copy " + name, content, "Saving files is not available here. Copy the text and paste it into a file named " + name + ".");
+  if (!dl) { if (window.__STANDALONE) { anchorDownload(name, content); return; } fallback(); return; }
+  try { await dl.save({ filename: name, data: content }); toast("Saved " + name, "ok"); }
+  catch (e) {
+    const c = e && e.code;
+    if (c === "declined") return;
+    if (c === "too_large" || c === "rate_limited" || c === "bad_request") { toast("Could not save: " + (e.message || c), "err"); return; }
+    dlCap = null; fallback();
+  }
+}
+function anchorDownload(name, content) {
+  const mime = /\.json$/i.test(name) ? "application/json" : "text/markdown;charset=utf-8";
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  toast("Saved " + name, "ok");
+}
+const safeName = s => (s || "appspec").replace(/[^\w\-. ]+/g, "_");
+function downloadMd() { const p = activeProject(); if (p) saveFile(safeName(p.name) + ".md", p.md); }
+function exportIssuesJson() {
+  const p = activeProject();
+  if (!p || !p.issues.length) { toast("This project has no issues to save.", "err"); return; }
+  saveFile(safeName(p.name) + ".eracig.json", JSON.stringify(p.issues.map(i => serializeIssue(i, getRes(p, i))), null, 2));
+}
+function doBackup() {
+  const payload = { app: "ERACiG Workbench", version: state.version, exportedAt: new Date().toISOString(),
+    projects: state.projects, prompts: state.prompts, ui: state.ui, activeId: state.activeId };
+  saveFile("eracig-workbench-backup-" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(payload, null, 2));
+}
+
+/* ============================================================== IMPORTS  */
+function ingestJsonText(text, mode) {
+  const p = activeProject();
+  let issues;
+  try { issues = parseIssuePayload(text); } catch (e) { toast("JSON error: " + e.message, "err"); return; }
+  if (!issues.length) { toast("No issues found in that JSON.", "err"); return; }
+  if (mode === "replace") { p.issues = issues; p.resolutions = {}; }
+  else {
+    const ids = new Set(p.issues.map(i => i.id));
+    issues.forEach(i => { if (ids.has(i.id)) i.id = "iss_" + uid(); p.issues.push(i); });
+  }
+  p.updatedAt = Date.now();
+  renderIssueList(); renderProjectStats(); saveState();
+  toast("Imported " + issues.length + " issue" + (issues.length === 1 ? "" : "s") + ".", "ok");
+  if (state.ui.tab === "data") setTab("issues");
+}
+
+async function handleMdFiles(files) {
+  const list = Array.from(files);
+  for (const f of list) {
+    const text = stripFileMarkers(await readFile(f));
+    const p = newProject(f.name.replace(/\.(md|markdown|txt)$/i, "") || "Imported spec", text);
+    state.projects.push(p);
+    state.activeId = p.id;
+  }
+  loadProject(state.activeId);
+  toast("Imported " + list.length + " spec" + (list.length === 1 ? "" : "s") + ".", "ok");
+}
+async function handleJsonFile(file) { ingestJsonText(await readFile(file), "replace"); }
+
+async function restoreBackup(file) {
+  try {
+    const data = JSON.parse(await readFile(file));
+    if (!data || !Array.isArray(data.projects) || !data.projects.length) throw new Error("Not a workbench backup");
+    if (!await confirmModal("Restore backup", "This replaces all projects currently in this browser. Continue?", "Restore")) return;
+    state = migrate({ version: data.version || 1, activeId: data.activeId || data.projects[0].id, projects: data.projects,
+      prompts: Object.assign(defaultPrompts(), data.prompts || {}), ui: Object.assign({}, data.ui || {}, { tab: "issues" }) });
+    persist();
+    applyFontSize(); loadPromptsIntoUI(); loadProject(state.activeId); setTab("issues");
+    toast("Backup restored.", "ok");
+  } catch (e) { toast("Restore failed: " + e.message, "err"); }
+}
+
+/* ============================================================ PROJECT UI */
+function loadProject(id) {
+  state.activeId = id;
+  refreshEditor(false);
+  renderIssueList(); renderProjectStats(); updateUndoButtons();
+  if (state.ui.tab === "preview") renderPreview();
+  saveState();
+}
+
+function renderProjectStats() {
+  const p = activeProject(), el = $("#projStats");
+  if (!p) { el.innerHTML = ""; return; }
+  const applied = p.issues.filter(i => getRes(p, i).applied).length;
+  const discarded = p.issues.filter(i => getRes(p, i).mode === "discard").length;
+  el.innerHTML = "<div><b>" + p.issues.length + "</b>issues</div><div><b>" + applied + "</b>applied</div>"
+    + "<div><b>" + discarded + "</b>discarded</div><div><b>" + (p.md.match(/\S+/g) || []).length + "</b>words</div>";
+}
+
+function openProjects() {
+  const html = '<div class="grp">Projects</div>' + state.projects.map(p =>
+    sheetRow("p:" + p.id, p.name, (p.md.match(/\S+/g) || []).length + " words · " + p.issues.length + " issues", p.id === state.activeId ? " on" : "")).join("")
+    + '<div class="grp">This project</div>' + sheetRow("new", "New project", "Start with an empty spec")
+    + sheetRow("import", "Import .md specs", "Each file becomes a project")
+    + sheetRow("rename", "Rename") + sheetRow("delete", "Delete", "", " danger");
+  openSheet("Projects", html, async (k, el, close) => {
+    if (k.startsWith("p:")) { close(); loadProject(k.slice(2)); return; }
+    if (k === "import") { $("#fileMd").click(); close(); return; }
+    close();
+    const p = activeProject();
+    if (k === "new") {
+      const name = await promptModal("New project name", "Untitled spec");
+      if (name == null) return;
+      const np = newProject(name.trim() || "Untitled spec", "");
+      state.projects.push(np); loadProject(np.id); setTab("editor");
+    } else if (k === "rename") {
+      const name = await promptModal("Rename project", p.name);
+      if (name == null) return;
+      p.name = name.trim() || p.name; $("#projName").textContent = p.name; saveState();
+    } else if (k === "delete") {
+      if (state.projects.length === 1) { toast("You cannot delete the last project.", "err"); return; }
+      if (!await confirmModal("Delete project", 'Delete "' + p.name + '"? This cannot be undone.', "Delete")) return;
+      state.projects = state.projects.filter(x => x.id !== p.id);
+      loadProject(state.projects[0].id);
+    }
+  });
+}
+
+function openMenu() {
+  const html = '<div class="grp">Import</div>' + sheetRow("md", "Import .md specs", "Each file becomes a project")
+    + sheetRow("json", "Import ERACiG JSON", "Replaces issues in this project")
+    + '<div class="grp">Save</div>' + sheetRow("savemd", "Save spec as .md") + sheetRow("savejson", "Save ERACiG JSON")
+    + '<div class="grp">Backup</div>' + sheetRow("backup", "Save full backup", "Every project, prompt and setting")
+    + sheetRow("restore", "Restore backup");
+  openSheet("File", html, (k, el, close) => {
+    if (k === "md") $("#fileMd").click();
+    else if (k === "json") $("#fileJson").click();
+    else if (k === "restore") $("#fileRestore").click();
+    close();
+    if (k === "savemd") downloadMd();
+    else if (k === "savejson") exportIssuesJson();
+    else if (k === "backup") doBackup();
+  });
+}
+
+/* =============================================================== OUTLINE */
+function getOutline(md) {
+  const out = []; let fence = null;
+  String(md || "").split("\n").forEach((ln, i) => {
+    const f = ln.match(/^\s*(`{3,}|~{3,})/);
+    if (f) { if (!fence) fence = f[1][0]; else if (f[1][0] === fence) fence = null; return; }
+    if (fence) return;
+    const m = ln.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
+    if (m) out.push({ level: m[1].length, text: m[2].replace(/[*_`]/g, ""), line: i, idx: out.length });
+  });
+  return out;
+}
+
+function openOutline() {
+  const p = activeProject(), items = getOutline(p.md);
+  const html = items.length ? items.map(h => '<button class="ol-item l' + h.level + '" data-s="' + h.idx + '">' + escapeHtml(h.text) + "</button>").join("")
+    : "<p>No headings yet. Start a line with # to add one.</p>";
+  openSheet("Outline", html, (k, el, close) => {
+    close();
+    const h = items[+k];
+    if (!h) return;
+    if (state.ui.tab === "preview") {
+      const target = $$("#preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6")[h.idx];
+      if (!target) return;
+      let s = target.closest(".psec");
+      while (s) { s.classList.remove("collapsed"); previewFolded.delete(s.dataset.key); s = s.parentElement && s.parentElement.closest(".psec"); }
+      target.scrollIntoView({ block: "start" });
+    } else {
+      let off = 0; for (let i = 0; i < h.line; i++) off += hlLines[i].length + 1;
+      ta.setSelectionRange(off, off);
+      scrollToLine(h.line, true);
+    }
+  });
+}
+
+/* ================================================================ TABS   */
+function setTab(t) {
+  if (TABS.indexOf(t) < 0) t = "editor";
+  state.ui.tab = t;
+  TABS.forEach(x => { $("#v-" + x).hidden = x !== t; });
+  $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  if (t === "editor") grow();
+  if (t === "preview") renderPreview();
+  if (t === "data") renderProjectStats();
+  if (t === "prompts") loadPromptsIntoUI();
+  saveState();
+}
+$("#nav").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if (b) setTab(b.dataset.tab); });
+
+$("#chips").addEventListener("click", e => {
+  const c = e.target.closest(".chip");
+  if (!c) return;
+  const f = c.dataset.filter;
+  activeFilters[f] = !activeFilters[f];
+  c.classList.toggle("on", activeFilters[f]);
+  renderIssueList();
+});
+$("#btnApplyAll").addEventListener("click", applyAllResolved);
+
+$("#preview").addEventListener("click", e => {
+  const h = e.target.closest(".psec-h");
+  if (!h || e.target.closest("a")) return;
+  const sec = h.parentElement, key = sec.dataset.key;
+  if (previewFolded.has(key)) previewFolded.delete(key); else previewFolded.add(key);
+  sec.classList.toggle("collapsed");
+});
+$("#btnExpandAll").addEventListener("click", () => { previewFolded.clear(); renderPreview(); });
+$("#btnCollapseAll").addEventListener("click", () => { $$("#preview .psec").forEach(s => previewFolded.add(s.dataset.key)); renderPreview(); });
+
+$("#btnProjects").addEventListener("click", openProjects);
+$("#btnMenu").addEventListener("click", openMenu);
+$("#btnOutlineE").addEventListener("click", openOutline);
+$("#btnOutlineP").addEventListener("click", openOutline);
+$("#btnUndo").addEventListener("click", undo);
+$("#btnRedo").addEventListener("click", redo);
+$("#btnFontDown").addEventListener("click", () => { state.ui.fontSize = Math.max(13, state.ui.fontSize - 1); applyFontSize(); saveState(); });
+$("#btnFontUp").addEventListener("click", () => { state.ui.fontSize = Math.min(22, state.ui.fontSize + 1); applyFontSize(); saveState(); });
+
+/* file inputs */
+$("#fileMd").addEventListener("change", async e => { if (e.target.files.length) await handleMdFiles(e.target.files); e.target.value = ""; });
+$("#fileJson").addEventListener("change", async e => { if (e.target.files[0]) await handleJsonFile(e.target.files[0]); e.target.value = ""; });
+$("#fileRestore").addEventListener("change", async e => { if (e.target.files[0]) await restoreBackup(e.target.files[0]); e.target.value = ""; });
+
+/* data tab */
+$("#btnPasteReplace").addEventListener("click", () => { const t = $("#jsonPaste").value.trim(); if (!t) toast("Paste some JSON first.", "err"); else ingestJsonText(t, "replace"); });
+$("#btnPasteAppend").addEventListener("click", () => { const t = $("#jsonPaste").value.trim(); if (!t) toast("Paste some JSON first.", "err"); else ingestJsonText(t, "append"); });
+$("#btnPasteClear").addEventListener("click", () => { $("#jsonPaste").value = ""; });
+$("#btnExportJson").addEventListener("click", exportIssuesJson);
+$("#btnBackup2").addEventListener("click", doBackup);
+$("#btnRestore2").addEventListener("click", () => $("#fileRestore").click());
+$("#btnResetResolutions").addEventListener("click", async () => {
+  if (!await confirmModal("Reset resolutions", "Clear every choice, custom fix and applied change for this project? The document text is not reverted.", "Reset")) return;
+  activeProject().resolutions = {};
+  renderIssueList(); renderProjectStats(); saveState();
+});
+$("#btnWipe").addEventListener("click", async () => {
+  if (!await confirmModal("Erase everything", "Delete all projects, prompts and settings from this browser?", "Erase")) return;
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  location.reload();
+});
+
+/* prompts tab */
+function loadPromptsIntoUI() { $("#promptDoc").value = state.prompts.doc; $("#promptJson").value = state.prompts.json; }
+$("#promptDoc").addEventListener("input", e => { state.prompts.doc = e.target.value; saveState(); });
+$("#promptJson").addEventListener("input", e => { state.prompts.json = e.target.value; saveState(); });
+$("#v-prompts").addEventListener("click", e => {
+  const c = e.target.closest("[data-copy]");
+  if (c) { copyOrShow($("#" + c.dataset.copy).value, "Copy prompt", "Prompt copied."); return; }
+  const cf = e.target.closest("[data-copy-filled]");
+  if (cf) {
+    const p = activeProject();
+    let text = $("#" + cf.dataset.copyFilled).value;
+    text = text.replace(cf.dataset.copyFilled === "promptDoc" ? /\{\{APP_SPEC\}\}/g : /\{\{ERACIG_DOC\}\}/g, () => (p ? p.md : ""));
+    copyOrShow(text, "Copy prompt", "Copied with the current text filled in.");
+    return;
+  }
+  const rs = e.target.closest("[data-reset]");
+  if (rs) {
+    if (rs.dataset.reset === "promptDoc") { state.prompts.doc = DEFAULT_DOC_PROMPT; } else { state.prompts.json = DEFAULT_JSON_PROMPT; }
+    loadPromptsIntoUI(); saveState(); toast("Prompt reset.", "ok");
+  }
+});
+
+/* drag and drop (desktop) */
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", async e => {
+  e.preventDefault();
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || !files.length) return;
+  const md = [], js = [];
+  Array.from(files).forEach(f => (/\.json$/i.test(f.name) ? js : md).push(f));
+  if (md.length) await handleMdFiles(md);
+  for (const f of js) {
+    const text = await readFile(f);
+    try { const d = JSON.parse(text); if (d && Array.isArray(d.projects) && d.projects.length) { await restoreBackup(f); break; } } catch (err) {}
+    ingestJsonText(text, "replace");
+  }
+});
+
+/* keyboard shortcuts */
+document.addEventListener("keydown", e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const t = e.target;
+  if (t.matches && t.matches("input, textarea") && t.id !== "editor") return;
+  const k = (e.key || "").toLowerCase();
+  if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+  else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+  else if (k === "s") { e.preventDefault(); downloadMd(); }
+});
+
+/* keep the layout above the on-screen keyboard */
+if (window.visualViewport) {
+  const vv = window.visualViewport, app = $("#app");
+  const sync = () => {
+    const kb = window.innerHeight - vv.height > 140;
+    document.body.classList.toggle("kb", kb);
+    if (kb) { app.style.height = vv.height + "px"; app.style.transform = "translateY(" + vv.offsetTop + "px)"; }
+    else { app.style.height = ""; app.style.transform = ""; }
+    grow();
+  };
+  vv.addEventListener("resize", sync);
+  vv.addEventListener("scroll", sync);
+}
+
+/* ================================================================ BOOT   */
+function init() {
+  state = loadState() || defaultState();
+  applyFontSize();
+  loadPromptsIntoUI();
+  refreshEditor(false);
+  renderIssueList(); renderProjectStats(); updateUndoButtons();
+  setTab(state.ui.tab);
+  window.addEventListener("resize", grow);
+  window.addEventListener("pagehide", persist);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) persist(); });
+}
+init();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready).then(() => {
+      let seen = false;
+      try { seen = localStorage.getItem("eracig.offlineReady") === "1"; localStorage.setItem("eracig.offlineReady", "1"); } catch (e) {}
+      if (!seen) toast("Ready to use offline.", "ok");
+    }).catch(() => {});
+  });
+}
+
+</script>
+</body>
+</html>
